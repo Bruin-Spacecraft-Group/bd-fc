@@ -5,7 +5,7 @@
 *     1. call pulse_success(); blinks on-board LED, sets pin 1 to high for 0.5 seconds
 *     2. call Serial.println()
 *
- */
+*/
 void setup() {
   Serial.begin(115200);
   pinMode(1, OUTPUT);
