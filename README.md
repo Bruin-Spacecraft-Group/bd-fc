@@ -53,7 +53,11 @@
 - put constant strings in flash memory! (this shouldn't be much of a problem)
 
 ## Repo Organization:
+
 `tests/`: code for testing various subcomponents
+
 `support/`: code for new GSE telemetryProcessors, as well as code to flash on supporting devices (umbilical)
-`flight/`: flight code~
+
+`flight/`: flight code!
+
 `ftests/`: test suite to push specific nff and avionics datasets to the FC, detailing its reponses
