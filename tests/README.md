@@ -17,4 +17,4 @@ Because the way the arduino IDE functions, each sketch will have its own folder 
   
 ## Documenting a test
 
-- every test should contain some kind of file, explaining what output is expected given what input and config
+- in the sketch, before the main code, there should be some text explaining what kind of output we can expect given what input and configuration
