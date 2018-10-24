@@ -1,6 +1,5 @@
-# bd-fc
-Bluedawn Arduino Flight Computer
-----
+# bd-fc: Bluedawn Arduino Flight Computer
+
 ## Hardware Used
 
 - Flight Config:
