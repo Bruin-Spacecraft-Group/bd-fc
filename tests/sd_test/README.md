@@ -49,7 +49,7 @@ The generic example implements the disk I/O layer (abstracted in pff) in `mmcbbp
 - `FORWARD(d)`:
 	- not sure what this function does; has something to do with processing bits as they come in, which is useless for this project; set to `;` (nop)
 - `(CS/CK/DI)_(H/L)`: set pin to high/low:
-	- easiest way to do this is by bitmathing `PORTB`
+	- easiest way to do this is by bitmathing `PORTB` (this takes 2 CPU cycles, rather than 56 if using `digital_write()`
 	- `PORTB` contains the output states of pins 8-13 (a la `DDRB`)
 	- `PORTB |= B00000001` sets pin 8 to HIGH
 		- x OR 1 = 1, x OR 0 = x, changes pin 8 only
