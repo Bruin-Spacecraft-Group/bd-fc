@@ -44,7 +44,7 @@ The generic example implements the disk I/O layer (abstracted in pff) in `mmcbbp
 	- equivalent to `pinMode(8, HIGH)....` but takes less time
 - `DLY_US(n)`:
 	- delay for n microseconds
-	- Arduino provides (delayMicroseconds\(unsigned int\))[https://www.arduino.cc/en/pmwiki.php?n=Reference/DelayMicroseconds] that's accurate from 3us to 16000us)
+	- Arduino provides [`delayMicroseconds(unsigned int)`](https://www.arduino.cc/en/pmwiki.php?n=Reference/DelayMicroseconds) that's accurate from 3us to 16000us)
 	- code only calls `DLY_US(1000)` and `DLY_US(100)`, so fine to use
 - `FORWARD(d)`:
 	- not sure what this function does; has something to do with processing bits as they come in, which is useless for this project; set to `;` (nop)
