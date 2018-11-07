@@ -22,16 +22,22 @@ void die (		/* Stop with dying message */
 	FRESULT rc	/* FatFs return value */
 )
 {
-	printf("Failed with rc=%u.\n", rc);
+  Serial.print("Failed with ");
+  Serial.println(rc);
 	for (;;) ;
 }
 
+void setup() {
+  // start serial port at 9600 bps:
+  Serial.begin(9600);
+  printf("hello");
+}
 
 /*-----------------------------------------------------------------------*/
 /* Program Main                                                          */
 /*-----------------------------------------------------------------------*/
 
-int main (void)
+void loop()
 {
   FRESULT rc;
 	FATFS fatfs;			/* File system object */
@@ -41,46 +47,48 @@ int main (void)
 	BYTE buff[64];
 
 
-	printf("\nMount a volume.\n");
+	Serial.print("\nMount a volume.\n");
 	rc = pf_mount(&fatfs);
 	if (rc) die(rc);
 
-	printf("\nOpen a test file (message.txt).\n");
-	rc = pf_open("MESSAGE.TXT");
+	Serial.print("\nOpen a test file (message.txt).\n");
+	rc = pf_open("TEST.TXT");
 	if (rc) die(rc);
 
-	printf("\nType the file content.\n");
+	Serial.print("\nType the file content.\n");
 	for (;;) {
-		rc = pf_read(buff, sizeof(buff), &br);	/* Read a chunk of file */
-		if (rc || !br) break;			/* Error or end of file */
-		for (i = 0; i < br; i++)		/* Type the data */
+		rc = pf_read(buff, sizeof(buff), &br);
+		if (rc || !br) break;
+	  for (i = 0; i < br; i++){
 			Serial.print(buff[i]);
+      Serial.print(" ");
+	  }
 	}
 	if (rc) die(rc);
-
+ 
 #if _USE_WRITE
-	printf("\nOpen a file to write (write.txt).\n");
-	rc = pf_open("WRITE.TXT");
+	Serial.print("\nOpen a file to write (write.txt).\n");
+	rc = pf_open("TEST.TXT");
 	if (rc) die(rc);
 
-	printf("\nWrite a text data. (Hello world!)\n");
+	Serial.print("\nWrite a text data. (Hello world!)\n");
 	for (;;) {
-		rc = pf_write("Hello world!\r\n", 14, &bw);
+		rc = pf_write("testr", 5, &bw);
 		if (rc || !bw) break;
 	}
 	if (rc) die(rc);
 
-	printf("\nTerminate the file write process.\n");
+	Serial.print("\nTerminate the file write process.\n");
 	rc = pf_write(0, 0, &bw);
 	if (rc) die(rc);
 #endif
 
 #if _USE_DIR
-	printf("\nOpen root directory.\n");
+	Serial.print("\nOpen root directory.\n");
 	rc = pf_opendir(&dir, "");
 	if (rc) die(rc);
 
-	printf("\nDirectory listing...\n");
+	Serial.print("\nDirectory listing...\n");
 	for (;;) {
 		rc = pf_readdir(&dir, &fno);	/* Read a directory item */
 		if (rc || !fno.fname[0]) break;	/* Error or end of dir */
@@ -92,6 +100,6 @@ int main (void)
 	if (rc) die(rc);
 #endif
 
-	printf("\nTest completed.\n");
+	Serial.print("\nTest completed.\n");
 	for (;;) ;
 }
