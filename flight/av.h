@@ -21,6 +21,8 @@
 #define LSM9DS0_XM_ID                      (0b01001001)
 #define LSM9DS0_G_ID                       (0b11010100)
 
+#define LSM9DSO_FIFO_CTRL_REG_G (0x2E)
+#define LSM9DSO_FIFO_CTRL_REG_XM (0x2E)
 
 // Linear Acceleration: mg per LSB
 #define LSM9DS0_ACCELRANGE_2G  (0b000 << 3)
@@ -40,7 +42,7 @@
 #define LSM9DS0_MAGGAIN_2GAUSS (0b00 << 5)  // +/- 2 gauss
 #define LSM9DS0_MAGGAIN_4GAUSS (0b01 << 5)  // +/- 4 gauss
 #define LSM9DS0_MAGGAIN_8GAUSS (0b10 << 5)  // +/- 8 gauss
-#define LSM9DS0_MAGGAIN_12GAUS (0b11 << 5)   // +/- 12 gauss
+#define LSM9DS0_MAGGAIN_12GAUSS (0b11 << 5)   // +/- 12 gauss
 #define LSM9DS0_MAG_MGAUSS_2GAUSS      (0.08F)
 #define LSM9DS0_MAG_MGAUSS_4GAUSS      (0.16F)
 #define LSM9DS0_MAG_MGAUSS_8GAUSS      (0.32F)
@@ -66,7 +68,7 @@
 byte readBuffer(bool type, byte reg, byte len, uint8_t *buffer);
 void write8(bool type, byte reg, byte value);
 byte read8(bool type, byte reg);
-bool av_init();
+void av_init();
 void av_read(int16_t* A, int16_t* M, int16_t* G);
 void av_read(DATA* d);
 void av_read(int16_t* V);

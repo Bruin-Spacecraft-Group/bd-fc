@@ -9,31 +9,36 @@
 FATFS cl_sdVolume;
 UINT cl_sdBytesWritten;
 
+// any for(;;) eventually triggers the watchdog and causes a reset
+
 void cl_sdInit(){
 	FRESULT fc = pf_mount(&cl_sdVolume);
-	if(!fc){
-		// if it doesn't work, what should the FC do?
+	if(fc){
+		Serial.println("problem mounting");
+		for(;;);
 	}
 	fc = pf_open(SAVE_FILE);
-	if(!fc){
-		// what if we can't open the savefile?
+	if(fc){
+		Serial.println("problem opening");
+		for(;;);
 	}
 }
 
 void cl_sdWrite(byte* db){
 	// TODO: this also needs to update eeprom accordingly
 	FRESULT fc = pf_write(db, 512, &cl_sdBytesWritten);
-	if(!fc || cl_sdBytesWritten != 512){
-		// what should we do if saving didn't work?
+	if(fc || cl_sdBytesWritten != 512){
+		Serial.println("problem writing");
 	}
 	fc = pf_write(0, 0, &cl_sdBytesWritten);
-	if(!fc){
+	if(fc){
 		// why would this happen? is this important?
+		for(;;);
 	}
 }
 
 void cl_setDebugFlag(DATA* d){
-	bitWrite(d->FLAGS, 7, (analogRead(A0) == 1023));
+	bitWrite(d->FLAGS, FLAG_DEBUG, (analogRead(A0) == 1023));
 }
 
 void cl_getTime(DATA* d){
@@ -42,7 +47,7 @@ void cl_getTime(DATA* d){
 
 // we pass the entire datastructure here because time is not critical
 void cl_debugMode(DATA d){
-	byte* d_bytes = (bytes*)&d;
+	byte* d_bytes = (byte*)&d;
 	while(true){
 		if(!Serial.available())
 			continue;
@@ -77,11 +82,11 @@ void cl_debugMode(DATA d){
 					Serial.print(F("Time (ms): "));
 					Serial.print(d.time);
 					Serial.print(F(" x: "));
-					Serial.print((float)d.AV[i][0]*GYRO_DPS_DIGIT/1000);
+					Serial.print((float)d.AV[i][6]*GYRO_DPS_DIGIT/1000);
 					Serial.print(F(" y: "));
-					Serial.print((float)d.AV[i][1]*GYRO_DPS_DIGIT/1000);
+					Serial.print((float)d.AV[i][7]*GYRO_DPS_DIGIT/1000);
 					Serial.print(F(" z: "));
-					Serial.println((float)d.AV[i][2]*GYRO_DPS_DIGIT/1000);
+					Serial.println((float)d.AV[i][8]*GYRO_DPS_DIGIT/1000);
 					delay(100);
 				}
 				cl_sdWrite(d_bytes);
@@ -96,11 +101,11 @@ void cl_debugMode(DATA d){
 					Serial.print(F("Time (ms): "));
 					Serial.print(d.time);
 					Serial.print(F(" x: "));
-					Serial.print((float)d.AV[i][0]*MAG_MGAUSS_LSB/1000);
+					Serial.print((float)d.AV[i][3]*MAG_MGAUSS_LSB/1000);
 					Serial.print(F(" y: "));
-					Serial.print((float)d.AV[i][1]*MAG_MGAUSS_LSB/1000);
+					Serial.print((float)d.AV[i][4]*MAG_MGAUSS_LSB/1000);
 					Serial.print(F(" z: "));
-					Serial.println((float)d.AV[i][2]*MAG_MGAUSS_LSB/1000);
+					Serial.println((float)d.AV[i][5]*MAG_MGAUSS_LSB/1000);
 					delay(100);
 				}
 				cl_sdWrite(d_bytes);

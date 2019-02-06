@@ -6,11 +6,12 @@
 
 #include <Arduino.h>
 
-#define FLAG_DEBUG 0b10000000
-#define FLAG_UP    0b00010000
-#define FLAG_DOWN  0b00001000
-#define FLAG_WRITE 0b00000001
-#define FLAG_FLOW  0b01000000
+#define FLAG_DEBUG 7
+#define FLAG_UP    4
+#define FLAG_DOWN  3
+#define FLAG_WRITE 0
+#define FLAG_FLOW  6
+#define FLAG_NFF_FAIL 1
 // NOTE: THIS IS CASE SENSITIVE
 // ALSO PFF DOESN'T LET US USE LOWER CASE
 #define SAVE_FILE "WRITE.TXT"

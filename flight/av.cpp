@@ -1,5 +1,4 @@
 #include "av.h"
-int av_DATAROW = 0;
 
 byte readBuffer(bool type, byte reg, byte len, uint8_t *buffer){
 	byte address;
@@ -37,20 +36,21 @@ byte read8(bool type, byte reg){
 	return value;
 }
 
-bool av_init(){
+void av_init(){
 	// TODO: review this function and the register writes,
 	// sensitivity ranges
 	Wire.begin();
 	uint8_t reg = read8(XMTYPE, LSM9DS0_REGISTER_WHO_AM_I_XM);
 	if (reg != LSM9DS0_XM_ID)
-		return false;
+		for(;;);
 
 	reg = read8(GYROTYPE, LSM9DS0_REGISTER_WHO_AM_I_G);
 	if (reg != LSM9DS0_G_ID)
-		return false;
+		for(;;);
 
 	write8(XMTYPE, LSM9DS0_REGISTER_CTRL_REG1_XM, 0b00110111); // 12.5hz XYZ
-	write8(XMTYPE, LSM9DS0_REGISTER_CTRL_REG5_XM, 0b01101000); // disable temp, 12.5hz mag
+	write8(XMTYPE, LSM9DS0_REGISTER_CTRL_REG5_XM, 0b01101000);
+	// disable temp, 12.5hz mag
 	write8(XMTYPE, LSM9DS0_REGISTER_CTRL_REG7_XM, 0b00000000);
 	write8(GYROTYPE, LSM9DS0_REGISTER_CTRL_REG1_G, 0b00001111);
 
@@ -67,20 +67,28 @@ bool av_init(){
 	reg &= ~(0b00110000); reg |= GYRO_SCALE;
 	write8(GYROTYPE, LSM9DS0_REGISTER_CTRL_REG4_G, reg);
 
-	return true;
+	// Set up stream mode (TODO: test on flatsat!)
+	write8(XMTYPE, LSM9DSO_FIFO_CTRL_REG_XM, 0b01000000);
+	write8(GYROTYPE, LSM9DSO_FIFO_CTRL_REG_G, 0b01000000);
 }
 
 void av_read(DATA* d){
 	// Unwrap and rewrap:
 	// dereference d's AV array, and point at which one it wants
-	av_read((int16_t*) &(d->AV)[av_DATAROW++]);
-	if (av_DATAROW > 15) {av_DATAROW = 0;};
+	// TODO: test this on flatsat! init to stream mode,
+	// (if something is not working, then most of the data 
+	// would be empty bytes)
+	// ==> all are polling at 12.5 hz or once every 0.08 sec;
+	// it takes 12.5 datapoints to fill one second,
+	// so if we run it near the end of 1 second,
+	// we should get 12~13 datapoints
+	// for testing: use millis or micros for accurate time
+	for(av_DATAROW = 0; av_DATAROW < 15; av_DATAROW++){
+		av_read((int16_t*) &(d->AV)[av_DATAROW++]);
+	}
 }
 
 void av_read(int16_t* V){
-	// TODO:
-	// from what I've seen, unions work exact as expected;
-	// change this and possibly change it out on adafruit?
 	uint8_t xlo, ylo, zlo;
 	int16_t xhi, yhi, zhi;
 	byte buffer[6];
