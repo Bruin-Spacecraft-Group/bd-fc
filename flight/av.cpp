@@ -48,7 +48,7 @@ void av_init(){
 	if (reg != LSM9DS0_G_ID)
 		for(;;);
 
-	write8(XMTYPE, LSM9DS0_REGISTER_CTRL_REG1_XM, 0b00110111); // 12.5hz XYZ
+	write8(XMTYPE, LSM9DS0_REGISTER_CTRL_REG1_XM, 0b00110111); // (0b0011 -> 12.5hz XYZ)
 	write8(XMTYPE, LSM9DS0_REGISTER_CTRL_REG5_XM, 0b01101000);
 	// disable temp, 12.5hz mag
 	write8(XMTYPE, LSM9DS0_REGISTER_CTRL_REG7_XM, 0b00000000);
@@ -68,6 +68,7 @@ void av_init(){
 	write8(GYROTYPE, LSM9DS0_REGISTER_CTRL_REG4_G, reg);
 
 	// Set up stream mode (TODO: test on flatsat!)
+  write8(XMTYPE, LSM9DS0_REG0_XM, 0b01000000);
 	write8(XMTYPE, LSM9DSO_FIFO_CTRL_REG_XM, 0b01000000);
 	write8(GYROTYPE, LSM9DSO_FIFO_CTRL_REG_G, 0b01000000);
 }
@@ -83,8 +84,8 @@ void av_read(DATA* d){
 	// so if we run it near the end of 1 second,
 	// we should get 12~13 datapoints
 	// for testing: use millis or micros for accurate time
-	for(av_DATAROW = 0; av_DATAROW < 15; av_DATAROW++){
-		av_read((int16_t*) &(d->AV)[av_DATAROW++]);
+	for(int av_DATAROW = 0; av_DATAROW < 16; av_DATAROW++){
+		av_read((int16_t*) &(d->AV)[av_DATAROW]);
 	}
 }
 

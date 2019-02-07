@@ -21,6 +21,8 @@
 #define LSM9DS0_XM_ID                      (0b01001001)
 #define LSM9DS0_G_ID                       (0b11010100)
 
+#define LSM9DS0_REG0_XM (0x1F) // Enable FIFO (FOR XM ONLY)
+#define LSM9DS0_REG1_G (0x20) // TODO: what address is this actually
 #define LSM9DSO_FIFO_CTRL_REG_G (0x2E)
 #define LSM9DSO_FIFO_CTRL_REG_XM (0x2E)
 

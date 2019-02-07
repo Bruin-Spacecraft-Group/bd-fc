@@ -110,6 +110,20 @@ void cl_debugMode(DATA d){
 				}
 				cl_sdWrite(d_bytes);
 				break;
+			case 'd':
+				// dump data really quickly!!!
+				Serial.println(F("DUMP:"));
+				cl_getTime(&d);
+				av_read(&d);
+				// dump nff, flowmeter, etc
+				Serial.println(d.time);
+				for(int i = 0; i < 16; i++){
+					for(int j = 0; j < 9; j++){
+						Serial.print(d.AV[i][j]);
+						Serial.print(" ");
+					}
+					Serial.println();
+				}
 		}
 	}
 }

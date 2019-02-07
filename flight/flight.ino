@@ -47,5 +47,5 @@ void setup(){
 }
 
 void loop(){
-	nff_datapoint = get_nff_data(nff_buf);
+	//nff_datapoint = get_nff_data(nff_buf);
 }
