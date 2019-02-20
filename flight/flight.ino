@@ -35,7 +35,7 @@ void setup(){
 	// to allow for a complete transfer before timing out).
 	Serial.setTimeout(20);
 	// Initialize avionics board
-	av_init(); 
+	av_init();
 	// Initialize the SD workspace
 	cl_sdInit();
 	// Check whether A0 & 5V are connected; if yes, drop to debug mode
@@ -47,5 +47,13 @@ void setup(){
 }
 
 void loop(){
-	//nff_datapoint = get_nff_data(nff_buf);
+	cl_getTime(&d);
+	// blocking? watchdog? terminate after time?
+	av_read(&d);
+	while(!Serial.available())
+		;
+	nff_datapoint = nff_getData(&d);
+	Serial.println(nff_datapoint);
+	cl_sdWrite(d_bytes);
+	delay(90);
 }

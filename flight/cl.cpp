@@ -28,6 +28,7 @@ void cl_sdWrite(byte* db){
 	// TODO: this also needs to update eeprom accordingly
 	FRESULT fc = pf_write(db, 512, &cl_sdBytesWritten);
 	if(fc || cl_sdBytesWritten != 512){
+		Serial.println(cl_sdBytesWritten);
 		Serial.println("problem writing");
 	}
 	fc = pf_write(0, 0, &cl_sdBytesWritten);
@@ -38,6 +39,7 @@ void cl_sdWrite(byte* db){
 }
 
 void cl_setDebugFlag(DATA* d){
+	// possible threshold?
 	bitWrite(d->FLAGS, FLAG_DEBUG, (analogRead(A0) == 1023));
 }
 

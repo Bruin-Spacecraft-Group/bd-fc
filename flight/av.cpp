@@ -67,8 +67,8 @@ void av_init(){
 	reg &= ~(0b00110000); reg |= GYRO_SCALE;
 	write8(GYROTYPE, LSM9DS0_REGISTER_CTRL_REG4_G, reg);
 
-	// Set up stream mode (TODO: test on flatsat!)
-  write8(XMTYPE, LSM9DS0_REG0_XM, 0b01000000);
+	// Set up stream mode
+  	write8(XMTYPE, LSM9DS0_REG0_XM, 0b01000000);
 	write8(XMTYPE, LSM9DSO_FIFO_CTRL_REG_XM, 0b01000000);
 	write8(GYROTYPE, LSM9DSO_FIFO_CTRL_REG_G, 0b01000000);
 }
@@ -76,15 +76,13 @@ void av_init(){
 void av_read(DATA* d){
 	// Unwrap and rewrap:
 	// dereference d's AV array, and point at which one it wants
-	// TODO: test this on flatsat! init to stream mode,
-	// (if something is not working, then most of the data 
-	// would be empty bytes)
 	// ==> all are polling at 12.5 hz or once every 0.08 sec;
 	// it takes 12.5 datapoints to fill one second,
 	// so if we run it near the end of 1 second,
 	// we should get 12~13 datapoints
 	// for testing: use millis or micros for accurate time
 	for(int av_DATAROW = 0; av_DATAROW < 16; av_DATAROW++){
+		// addition to pointer isntead?
 		av_read((int16_t*) &(d->AV)[av_DATAROW]);
 	}
 }

@@ -19,7 +19,7 @@
 typedef struct{
 	unsigned char FLAGS;
 	union{
-		long l;
+		unsigned long l;
 		byte b[4];
 	}SD_ADDR;
 	unsigned long time;

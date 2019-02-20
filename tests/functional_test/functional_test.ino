@@ -25,7 +25,7 @@ void setup() {
 }
 
 void loop() {
-	while(!Serial.available())
+	while(!Serial.available()) 
 	; //hold until there is data
 	val = nff_data();
 	avi_data();
