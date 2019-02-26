@@ -4,7 +4,7 @@
  * equivalent to getting ~6G of acceleration (note direction is unspecified)
  *
  */
-#define CHECK_POS 3
+#define CHECK_POS 13
 #define CHECK_VAL 193000000
 
 long val;
@@ -12,19 +12,20 @@ char buf[200] = {0};
 
 void setup() {
 	Serial.begin(115200);
-  Serial.setTimeout(20);
+	Serial.setTimeout(20);
 	pinMode(LED_BUILTIN, OUTPUT);
 }
 
 long get_nff_data() {
+  delay(1000);
 	char temp[20] = {0};
 	int len;
 	int l = 0; int i = 1; int p = 0; int shift = 0;
-  while(!Serial.available())
-    ; // hold program until new data
+	while(!Serial.available())
+		; // hold program until new data
 	len = Serial.readBytes(buf, 200);
 	while (l < len) {
-    // THIS USES SHORT CIRCUTING AND PREFIX i.e. second comma, next datafield is altitude
+		// THIS USES SHORT CIRCUTING AND PREFIX i.e. second comma, next datafield is altitude
 		if (buf[l] == ',' && ++p == CHECK_POS - 1) {
 			while(buf[l+i] != ',') {
 				if(!shift && buf[l+i] == '.') {
@@ -44,7 +45,7 @@ long get_nff_data() {
 
 void loop() {
 	val = get_nff_data();
-  Serial.println(val);
+	Serial.println(val);
 	if (val && val > CHECK_VAL){
 		Serial.print("Check Reached!");
 		digitalWrite(LED_BUILTIN, HIGH);

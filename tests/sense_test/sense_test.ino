@@ -18,5 +18,6 @@ void loop() {
 	Serial.print((float)buf[1] * 0.001);
 	Serial.print(", ");
 	Serial.print((float)buf[2] / ina219_currentDivider_mA);
+  Serial.println();
 	delay(250);
 }

@@ -17,6 +17,7 @@ void write16(uint8_t reg, uint16_t val){
 uint16_t read16(uint8_t reg){
 	Wire.beginTransmission(INA219_ADDRESS);
 	Wire.write(reg);
+  Wire.endTransmission();
 	uint16_t val;
 	delay(1);
 	Wire.requestFrom(INA219_ADDRESS, 2);
