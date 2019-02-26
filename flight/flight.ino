@@ -27,33 +27,33 @@ byte* d_bytes = (byte*)&d; //d_bytes allows us to access the d struct as if it w
 
 long nff_datapoint = 0;
 
-void setup(){
-	// Set baud rate to 115200 (Default serial configureation is 8N1)
-	Serial.begin(115200);
-	// Set timeout to 20ms (It may take up to 17ms for all of the data to
-	// transfer from the NFF, this ensures that enough time has passed
-	// to allow for a complete transfer before timing out).
-	Serial.setTimeout(20);
-	// Initialize avionics board
-	av_init();
-	// Initialize the SD workspace
-	cl_sdInit();
-	// Check whether A0 & 5V are connected; if yes, drop to debug mode
-	cl_setDebugFlag(&d);
-	if(bitRead(d.FLAGS, FLAG_DEBUG)){
-		Serial.println(F("Entering Debug Mode"));
-		cl_debugMode(d);
-	}
+void setup() {
+  // Set baud rate to 115200 (Default serial configureation is 8N1)
+  Serial.begin(115200);
+  // Set timeout to 20ms (It may take up to 17ms for all of the data to
+  // transfer from the NFF, this ensures that enough time has passed
+  // to allow for a complete transfer before timing out).
+  Serial.setTimeout(20);
+  // Initialize avionics board
+  avs_init();
+  // Initialize the SD workspace
+  cl_sdInit();
+  // Check whether A0 & 5V are connected; if yes, drop to debug mode
+  cl_setDebugFlag(&d);
+  if (bitRead(d.FLAGS, FLAG_DEBUG)) {
+    Serial.println(F("Entering Debug Mode"));
+    cl_debugMode(d);
+  }
 }
 
-void loop(){
-	cl_getTime(&d);
-	// blocking? watchdog? terminate after time?
-	av_read(&d);
-	while(!Serial.available())
-		;
-	nff_datapoint = nff_getData(&d);
-	Serial.println(nff_datapoint);
-	cl_sdWrite(d_bytes);
-	delay(90);
+void loop() {
+  cl_getTime(&d);
+  // blocking? watchdog? terminate after time?
+  avs_read(&d);
+  while (!Serial.available())
+    ;
+  nff_datapoint = nff_getData(&d);
+  Serial.println(nff_datapoint);
+  cl_sdWrite(d_bytes);
+  delay(90);
 }

@@ -67,12 +67,26 @@
 
 #define SENSORS_GRAVITY_EARTH             (9.80665F)
 
+#define INA219_ADDRESS                         (0x40)
+#define INA219_READ                            (0x01)
+#define INA219_REG_CALIBRATION                 (0x05)
+#define INA219_REG_CONFIG                      (0x00)
+#define INA219_REG_BUSVOLTAGE                  (0x02)
+#define INA219_REG_CURRENT                     (0x04)
+#define INA219_REG_POWER                       (0x03)
+#define INA219_REG_SHUNTVOLTAGE                (0x01)
+#define INA219_CALVALUE			(10240)
+#define INA219_CONFIGVALUE		(14751)
+
 byte readBuffer(bool type, byte reg, byte len, uint8_t *buffer);
 void write8(bool type, byte reg, byte value);
 byte read8(bool type, byte reg);
-void av_init();
+uint16_t read16(uint8_t reg);
+void write16(uint8_t reg, uint16_t val);
+void avs_init();
 void av_read(int16_t* A, int16_t* M, int16_t* G);
-void av_read(DATA* d);
+void avs_read(DATA* d);
 void av_read(int16_t* V);
+void sense_read(int16_t* buf);
 
 #endif

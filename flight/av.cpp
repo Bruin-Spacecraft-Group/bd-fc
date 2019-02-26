@@ -17,6 +17,24 @@ byte readBuffer(bool type, byte reg, byte len, uint8_t *buffer){
 	return len;
 }
 
+void write16(uint8_t reg, uint16_t val){
+	Wire.beginTransmission(INA219_ADDRESS);
+	Wire.write(reg);
+	Wire.write((val >> 8) & 0xFF); Wire.write(val & 0xFF);
+	Wire.endTransmission();
+}
+
+uint16_t read16(uint8_t reg){
+	Wire.beginTransmission(INA219_ADDRESS);
+	Wire.write(reg);
+	Wire.endTransmission();
+	uint16_t val;
+	delay(1);
+	Wire.requestFrom(INA219_ADDRESS, 2);
+	val = ((Wire.read() << 8) | Wire.read());
+	return val;
+}
+
 void write8(bool type, byte reg, byte value){
 	byte address;
 	if (type == GYROTYPE) {
@@ -36,7 +54,7 @@ byte read8(bool type, byte reg){
 	return value;
 }
 
-void av_init(){
+void avs_init(){
 	// TODO: review this function and the register writes,
 	// sensitivity ranges
 	Wire.begin();
@@ -71,9 +89,13 @@ void av_init(){
   	write8(XMTYPE, LSM9DS0_REG0_XM, 0b01000000);
 	write8(XMTYPE, LSM9DSO_FIFO_CTRL_REG_XM, 0b01000000);
 	write8(GYROTYPE, LSM9DSO_FIFO_CTRL_REG_G, 0b01000000);
+
+	// Set up sense
+	write16(INA219_REG_CALIBRATION, INA219_CALVALUE);
+	write16(INA219_REG_CONFIG, INA219_CONFIGVALUE);
 }
 
-void av_read(DATA* d){
+void avs_read(DATA* d){
 	// Unwrap and rewrap:
 	// dereference d's AV array, and point at which one it wants
 	// ==> all are polling at 12.5 hz or once every 0.08 sec;
@@ -82,9 +104,22 @@ void av_read(DATA* d){
 	// we should get 12~13 datapoints
 	// for testing: use millis or micros for accurate time
 	for(int av_DATAROW = 0; av_DATAROW < 16; av_DATAROW++){
-		// addition to pointer isntead?
+		// addition to pointer instead?
 		av_read((int16_t*) &(d->AV)[av_DATAROW]);
 	}
+}
+
+void sense_read(int16_t* buf){
+	uint16_t t;
+	t = read16(INA219_REG_SHUNTVOLTAGE);
+	buf[0] = (int16_t)t;
+	t = read16(INA219_REG_BUSVOLTAGE);
+	buf[1] = (int16_t)((t >> 3) * 4);
+	write16(INA219_REG_CALIBRATION, INA219_CALVALUE);
+	t = read16(INA219_REG_CURRENT);
+	buf[2] = (int16_t)(t);
+	t = read16(INA219_REG_POWER);
+	buf[3] = (int16_t)(t);
 }
 
 void av_read(int16_t* V){

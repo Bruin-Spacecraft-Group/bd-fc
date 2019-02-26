@@ -60,7 +60,7 @@ void cl_debugMode(DATA d){
 				// actual data points
 				Serial.println(F("\nTesting accelerometer:"));
 				for(int i = 0; i < 16; i++){
-					av_read(&d);
+					avs_read(&d);
 					cl_getTime(&d);
 					Serial.print(F("Time (ms): "));
 					Serial.print(d.time);
@@ -79,7 +79,7 @@ void cl_debugMode(DATA d){
 				// actual data points
 				Serial.println(F("\nTesting gyroscope:"));
 				for(int i = 0; i < 16; i++){
-					av_read(&d);
+					avs_read(&d);
 					cl_getTime(&d);
 					Serial.print(F("Time (ms): "));
 					Serial.print(d.time);
@@ -98,7 +98,7 @@ void cl_debugMode(DATA d){
 				// actual data points
 				Serial.println(F("\nTesting magnetometer:"));
 				for(int i = 0; i < 16; i++){
-					av_read(&d);
+					avs_read(&d);
 					cl_getTime(&d);
 					Serial.print(F("Time (ms): "));
 					Serial.print(d.time);
@@ -116,7 +116,7 @@ void cl_debugMode(DATA d){
 				// dump data really quickly!!!
 				Serial.println(F("DUMP:"));
 				cl_getTime(&d);
-				av_read(&d);
+				avs_read(&d);
 				// dump nff, flowmeter, etc
 				Serial.println(d.time);
 				for(int i = 0; i < 16; i++){
