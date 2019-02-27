@@ -1,4 +1,4 @@
-#include "av.h"
+#include "avs.h"
 
 byte readBuffer(bool type, byte reg, byte len, uint8_t *buffer){
 	byte address;
@@ -103,10 +103,11 @@ void avs_read(DATA* d){
 	// so if we run it near the end of 1 second,
 	// we should get 12~13 datapoints
 	// for testing: use millis or micros for accurate time
-	for(int av_DATAROW = 0; av_DATAROW < 16; av_DATAROW++){
+	for(int av_DATAROW = 1; av_DATAROW < 16; av_DATAROW++){
 		// addition to pointer instead?
 		av_read((int16_t*) &(d->AV)[av_DATAROW]);
 	}
+	sense_read((int16_t*) d->SENSE)
 }
 
 void sense_read(int16_t* buf){

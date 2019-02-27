@@ -1,5 +1,5 @@
-#ifndef __AV_H__
-#define __AV_H__
+#ifndef __AVS_H__
+#define __AVS_H__
 #include <Arduino.h>
 #include <Wire.h>
 #include "cl.h"

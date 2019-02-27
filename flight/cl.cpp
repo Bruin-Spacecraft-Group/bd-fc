@@ -2,9 +2,10 @@
 // debug mode, reading from the flowmeter and voltmeter
 
 #include "cl.h"
-#include "av.h"
+#include "avs.h"
 #include "pff.h"
 #include <Arduino.h>
+#include <EEPROM.h>
 
 FATFS cl_sdVolume;
 UINT cl_sdBytesWritten;
@@ -24,14 +25,19 @@ void cl_sdInit(){
 	}
 }
 
-void cl_sdWrite(byte* db){
-	// TODO: this also needs to update eeprom accordingly
-	FRESULT fc = pf_write(db, 512, &cl_sdBytesWritten);
+void cl_sdWrite(DATA* d){
+	unsigned long sd_addr;
+	EEPROM.get(1, sd_addr);
+	pf_lseek(sd_addr);
+	FRESULT fc = pf_write((bytes*)&d, 512, &cl_sdBytesWritten);
 	if(fc || cl_sdBytesWritten != 512){
 		Serial.println(cl_sdBytesWritten);
 		Serial.println("problem writing");
+		return;
 	}
 	fc = pf_write(0, 0, &cl_sdBytesWritten);
+	EEPROM.put(1, cl_sdVolume.fptr);
+	EEPROM.put(0, d.FLAGS);
 	if(fc){
 		// why would this happen? is this important?
 		for(;;);

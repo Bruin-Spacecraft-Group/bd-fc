@@ -23,9 +23,10 @@ typedef struct{
 		byte b[4];
 	}SD_ADDR;
 	unsigned long time;
-	byte NFF[210];
+	byte NFF[204];
+	int SENSE[4];
 	int AV[16][9];
-	long FLOW;
+	int FLOW;
 	unsigned char nul = 0x0;
 } DATA;
 

@@ -19,11 +19,10 @@
 ///////////////////////////////////////////////////////////////////////////////////////////
 
 #include "cl.h"
-#include "av.h"
+#include "avs.h"
 #include "nff.h"
 
 DATA d; // see cl.h for DATA struct
-byte* d_bytes = (byte*)&d; //d_bytes allows us to access the d struct as if it were an array of bytes
 
 long nff_datapoint = 0;
 
@@ -54,6 +53,6 @@ void loop() {
     ;
   nff_datapoint = nff_getData(&d);
   Serial.println(nff_datapoint);
-  cl_sdWrite(d_bytes);
+  cl_sdWrite(&d);
   delay(90);
 }
