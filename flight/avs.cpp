@@ -107,7 +107,7 @@ void avs_read(DATA* d){
 		// addition to pointer instead?
 		av_read((int16_t*) &(d->AV)[av_DATAROW]);
 	}
-	sense_read((int16_t*) d->SENSE)
+	sense_read((int16_t*) d->SENSE);
 }
 
 void sense_read(int16_t* buf){

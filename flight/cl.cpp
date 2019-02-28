@@ -14,6 +14,7 @@ UINT cl_sdBytesWritten;
 
 void cl_sdInit(){
 	FRESULT fc = pf_mount(&cl_sdVolume);
+	EEPROM.put(1, (unsigned long) 1);
 	if(fc){
 		Serial.println("problem mounting");
 		for(;;);
@@ -29,15 +30,16 @@ void cl_sdWrite(DATA* d){
 	unsigned long sd_addr;
 	EEPROM.get(1, sd_addr);
 	pf_lseek(sd_addr);
-	FRESULT fc = pf_write((bytes*)&d, 512, &cl_sdBytesWritten);
+	FRESULT fc = pf_write((byte*)d, 512, &cl_sdBytesWritten);
 	if(fc || cl_sdBytesWritten != 512){
+		Serial.println(sd_addr);
 		Serial.println(cl_sdBytesWritten);
 		Serial.println("problem writing");
 		return;
 	}
 	fc = pf_write(0, 0, &cl_sdBytesWritten);
 	EEPROM.put(1, cl_sdVolume.fptr);
-	EEPROM.put(0, d.FLAGS);
+	EEPROM.put(0, d->FLAGS);
 	if(fc){
 		// why would this happen? is this important?
 		for(;;);
@@ -55,7 +57,6 @@ void cl_getTime(DATA* d){
 
 // we pass the entire datastructure here because time is not critical
 void cl_debugMode(DATA d){
-	byte* d_bytes = (byte*)&d;
 	while(true){
 		if(!Serial.available())
 			continue;
@@ -78,7 +79,7 @@ void cl_debugMode(DATA d){
 					Serial.println((float)d.AV[i][2]*ACCEL_MG_LSB/1000);
 					delay(100);
 				}
-				cl_sdWrite(d_bytes);
+				cl_sdWrite(&d);
 				break;
 			case 'g':
 				// av_read returns raw data, for testing use
@@ -97,7 +98,7 @@ void cl_debugMode(DATA d){
 					Serial.println((float)d.AV[i][8]*GYRO_DPS_DIGIT/1000);
 					delay(100);
 				}
-				cl_sdWrite(d_bytes);
+				cl_sdWrite(&d);
 				break;
 			case 'm':
 				// av_read returns raw data, for testing use
@@ -116,7 +117,7 @@ void cl_debugMode(DATA d){
 					Serial.println((float)d.AV[i][5]*MAG_MGAUSS_LSB/1000);
 					delay(100);
 				}
-				cl_sdWrite(d_bytes);
+				cl_sdWrite(&d);
 				break;
 			case 'd':
 				// dump data really quickly!!!

@@ -39,7 +39,8 @@ void setup() {
   cl_sdInit();
   // Check whether A0 & 5V are connected; if yes, drop to debug mode
   cl_setDebugFlag(&d);
-  if (bitRead(d.FLAGS, FLAG_DEBUG)) {
+  // TODO: remove always debug
+  if (1 || bitRead(d.FLAGS, FLAG_DEBUG)) {
     Serial.println(F("Entering Debug Mode"));
     cl_debugMode(d);
   }

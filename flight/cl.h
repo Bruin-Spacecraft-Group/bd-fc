@@ -34,6 +34,6 @@ void cl_setDebugFlag(DATA* d);
 void cl_debugMode(DATA d);
 void cl_getTime(DATA* d);
 void cl_sdInit();
-void cl_sdWrite(byte* db);
+void cl_sdWrite(DATA* d);
 
 #endif
