@@ -17,7 +17,7 @@ DATA d;
 byte* db = (byte*)&d;
 
 void setup(){
-	SD.begin();
+	SD.begin(8);
 	f = SD.open(SD_FILE, FILE_READ);
 }
 
