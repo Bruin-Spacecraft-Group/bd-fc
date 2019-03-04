@@ -88,6 +88,7 @@ void avs_init(){
 	// Set up stream mode
   	write8(XMTYPE, LSM9DS0_REG0_XM, 0b01000000);
 	write8(XMTYPE, LSM9DSO_FIFO_CTRL_REG_XM, 0b01000000);
+  	write8(GYROTYPE, LSM9DS0_REG5_G, 0b01000000);
 	write8(GYROTYPE, LSM9DSO_FIFO_CTRL_REG_G, 0b01000000);
 
 	// Set up sense

@@ -14,7 +14,7 @@ typedef struct{
 
 File f;
 DATA d;
-byte* db = &d;
+byte* db = (byte*)&d;
 
 void setup(){
 	SD.begin();
@@ -22,7 +22,7 @@ void setup(){
 }
 
 void loop(){
-	while(f.availible){
+	while(f.available()){
 		f.read(db, 512);
 		Serial.println("+++++");
 		Serial.print("FLAGS: ");
