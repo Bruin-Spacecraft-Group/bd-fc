@@ -99,12 +99,7 @@ void avs_read(DATA* d){
 	// Unwrap and rewrap:
 	// dereference d's AV array, and point at which one it wants
 	// ==> all are polling at 12.5 hz or once every 0.08 sec;
-	// it takes 12.5 datapoints to fill one second,
-	// so if we run it near the end of 1 second,
-	// we should get 12~13 datapoints
-	// for testing: use millis or micros for accurate time
-	for(int av_DATAROW = 1; av_DATAROW < 16; av_DATAROW++){
-		// addition to pointer instead?
+	for(int av_DATAROW = 0; av_DATAROW < 16; av_DATAROW++){
 		av_read((int16_t*) &(d->AV)[av_DATAROW]);
 	}
 	sense_read((int16_t*) d->SENSE);

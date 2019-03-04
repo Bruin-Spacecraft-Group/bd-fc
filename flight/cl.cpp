@@ -2,6 +2,7 @@
 // debug mode, reading from the flowmeter and voltmeter
 
 #include "cl.h"
+#include "nff.h"
 #include "avs.h"
 #include "pff.h"
 #include <Arduino.h>
@@ -14,7 +15,6 @@ UINT cl_sdBytesWritten;
 
 void cl_sdInit(){
 	FRESULT fc = pf_mount(&cl_sdVolume);
-	EEPROM.put(1, (unsigned long) 1);
 	if(fc){
 		Serial.println("problem mounting");
 		for(;;);
@@ -27,18 +27,19 @@ void cl_sdInit(){
 }
 
 void cl_sdWrite(DATA* d){
-	unsigned long sd_addr;
-	EEPROM.get(1, sd_addr);
-	pf_lseek(sd_addr);
+	EEPROM.get(1, d->SD_ADDR);
+	pf_lseek(d->SD_ADDR);
+	noInterrupts();
 	FRESULT fc = pf_write((byte*)d, 512, &cl_sdBytesWritten);
+	interrupts();
 	if(fc || cl_sdBytesWritten != 512){
-		Serial.println(sd_addr);
 		Serial.println(cl_sdBytesWritten);
 		Serial.println("problem writing");
 		return;
 	}
 	fc = pf_write(0, 0, &cl_sdBytesWritten);
-	EEPROM.put(1, cl_sdVolume.fptr);
+	d->SD_ADDR = cl_sdVolume.fptr;
+	EEPROM.put(1, d->SD_ADDR);
 	EEPROM.put(0, d->FLAGS);
 	if(fc){
 		// why would this happen? is this important?
@@ -79,7 +80,6 @@ void cl_debugMode(DATA d){
 					Serial.println((float)d.AV[i][2]*ACCEL_MG_LSB/1000);
 					delay(100);
 				}
-				cl_sdWrite(&d);
 				break;
 			case 'g':
 				// av_read returns raw data, for testing use
@@ -98,7 +98,6 @@ void cl_debugMode(DATA d){
 					Serial.println((float)d.AV[i][8]*GYRO_DPS_DIGIT/1000);
 					delay(100);
 				}
-				cl_sdWrite(&d);
 				break;
 			case 'm':
 				// av_read returns raw data, for testing use
@@ -117,15 +116,28 @@ void cl_debugMode(DATA d){
 					Serial.println((float)d.AV[i][5]*MAG_MGAUSS_LSB/1000);
 					delay(100);
 				}
-				cl_sdWrite(&d);
 				break;
+
 			case 'd':
-				// dump data really quickly!!!
-				Serial.println(F("DUMP:"));
+				delay(100);
 				cl_getTime(&d);
 				avs_read(&d);
+				nff_getData(&d);
+				Serial.println(F("DUMP:"));
 				// dump nff, flowmeter, etc
+				Serial.println(d.FLAGS);
 				Serial.println(d.time);
+				Serial.println(d.SD_ADDR);
+				for(int i = 0; i < 204; i++){
+					Serial.print(char(d.NFF[i]));
+					Serial.print(" ");
+				}
+				Serial.println();
+				for(int i = 0; i < 4; i++){
+					Serial.print(d.SENSE[i]);
+					Serial.print(" ");
+				}
+				Serial.println();
 				for(int i = 0; i < 16; i++){
 					for(int j = 0; j < 9; j++){
 						Serial.print(d.AV[i][j]);
@@ -133,6 +145,53 @@ void cl_debugMode(DATA d){
 					}
 					Serial.println();
 				}
+				Serial.println(d.FLOW);
+				Serial.println(F("END OF DUMP"));
+				break;
+
+			case 't':
+				delay(100);
+				unsigned long b;
+				unsigned long e;
+				Serial.print(F("NFF TIME: "));
+				b = micros();
+				nff_getData(&d);
+				e = micros();
+				Serial.println(e - b);
+				Serial.print(F("AVS TIME: "));
+				b = micros();
+				avs_read(&d);
+				e = micros();
+				Serial.println(e - b);
+				Serial.print(F("WRITE TIME: "));
+				b = micros();
+				cl_sdWrite(&d);
+				e = micros();
+				Serial.println(e - b);
+				Serial.println();
+				break;
+
+			case 's':
+				delay(100);
+				Serial.print(F("NFF RETURN GIVEN DATA: "));
+				Serial.println(nff_getData(&d));
+				break;
+
+			case 'e':
+				Serial.println(F("CLEANING EEPROM"));
+				for(int i = 0; i < 256; i++)
+					EEPROM.put(i, 0);
+				break;
+			
+			case 'w':
+				Serial.println(F("WRITING TO SD CARD"));
+				Serial.print(F("EEPROM (BEFORE): "));
+				unsigned long temp;
+				Serial.println(EEPROM.get(1, temp));
+				cl_sdWrite(&d);
+				Serial.print(F("EEPROM (AFTER): "));
+				Serial.println(EEPROM.get(1, temp));
+				break;
 		}
 	}
 }
