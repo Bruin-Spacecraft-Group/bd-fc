@@ -17,6 +17,7 @@ DATA d;
 byte* db = (byte*)&d;
 
 void setup(){
+  Serial.begin(115200);
 	SD.begin(8);
 	f = SD.open(SD_FILE, FILE_READ);
 }

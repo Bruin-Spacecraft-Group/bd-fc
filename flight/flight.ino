@@ -25,6 +25,9 @@
 DATA d; // see cl.h for DATA struct
 
 long nff_datapoint = 0;
+void ir(){
+  d.FLOW++;
+}
 
 void setup() {
   // Set baud rate to 115200 (Default serial configureation is 8N1)
@@ -40,6 +43,7 @@ void setup() {
   // Check whether A0 & 5V are connected; if yes, drop to debug mode
   cl_setDebugFlag(&d);
   // TODO: remove always debug
+  attachInterrupt(digitalPinToInterrupt(2), ir, RISING);
   if (1 || bitRead(d.FLAGS, FLAG_DEBUG)) {
     Serial.println(F("Entering Debug Mode"));
     cl_debugMode(d);

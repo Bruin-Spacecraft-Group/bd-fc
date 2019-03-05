@@ -23,7 +23,7 @@ typedef struct{
 	byte NFF[204];
 	int SENSE[4];
 	int AV[16][9];
-	volatile int FLOW;
+	int volatile FLOW;
 	unsigned char nul = 0x0;
 } DATA;
 
