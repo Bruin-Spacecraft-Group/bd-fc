@@ -24,7 +24,6 @@
 
 DATA d; // see cl.h for DATA struct
 
-long nff_datapoint = 0;
 void ir(){
   d.FLOW++;
 }
@@ -44,6 +43,7 @@ void setup() {
   // Check whether A0 & 5V are connected; if yes, drop to debug mode
   cl_setDebugFlag(&d);
   // TODO: remove always debug
+  digitalWrite(2, HIGH);
   attachInterrupt(digitalPinToInterrupt(2), ir, RISING);
   if (1 || bitRead(d.FLAGS, FLAG_DEBUG)) {
     Serial.println(F("Entering Debug Mode"));
@@ -55,8 +55,7 @@ void loop() {
   cl_getTime(&d);
   avs_read(&d);
   if (Serial.available()){
-  	nff_datapoint = nff_getData(&d);
+  	nff_getData(&d);
   }
-  Serial.println(nff_datapoint);
   cl_sdWrite(&d);
 }

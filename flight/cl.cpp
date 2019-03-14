@@ -29,9 +29,9 @@ void cl_sdInit(){
 void cl_sdWrite(DATA* d){
 	EEPROM.get(1, d->SD_ADDR);
 	pf_lseek(d->SD_ADDR);
-	noInterrupts();
+//	noInterrupts();
 	FRESULT fc = pf_write((byte*)d, 512, &cl_sdBytesWritten);
-	interrupts();
+//	interrupts();
 	if(fc || cl_sdBytesWritten != 512){
 		Serial.println(cl_sdBytesWritten);
 		Serial.println("problem writing");

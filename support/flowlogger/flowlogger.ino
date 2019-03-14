@@ -29,7 +29,7 @@ void loop(){
 		;
 	freq = FreqCounter::f_freq;
 
-	Serial.print(micros());
+	Serial.print(millis());
 	Serial.print(" Current: ");
 	Serial.print(current_mA);
 	Serial.print(" Bus Voltage: ");
