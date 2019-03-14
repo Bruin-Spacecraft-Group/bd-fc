@@ -199,9 +199,9 @@ void cl_debugMode(DATA d){
 			case 'c':
 				avs_read(&d);
 				Serial.print(F("CURRENT (mA): "));
-				Serial.println(d.SENSE[3] / 25);
+				Serial.println((float)d.SENSE[2] / 25);
 				Serial.print(F("BUS VOLTAGE (V): "));
-				Serial.println(d.SENSE[2] * 0.001);
+				Serial.println(d.SENSE[1] * 0.001);
 		}
 	}
 }
