@@ -68,7 +68,7 @@ void cl_debugMode(DATA d){
 				// actual data points
 				Serial.println(F("\nTesting accelerometer:"));
 				for(int i = 0; i < 16; i++){
-					avs_read(&d);
+					Serial.println(avs_read(&d));
 					cl_getTime(&d);
 					Serial.print(F("Time (ms): "));
 					Serial.print(d.time);
@@ -86,7 +86,7 @@ void cl_debugMode(DATA d){
 				// actual data points
 				Serial.println(F("\nTesting gyroscope:"));
 				for(int i = 0; i < 16; i++){
-					avs_read(&d);
+					Serial.println(avs_read(&d));
 					cl_getTime(&d);
 					Serial.print(F("Time (ms): "));
 					Serial.print(d.time);
@@ -104,7 +104,7 @@ void cl_debugMode(DATA d){
 				// actual data points
 				Serial.println(F("\nTesting magnetometer:"));
 				for(int i = 0; i < 16; i++){
-					avs_read(&d);
+					Serial.println(avs_read(&d));
 					cl_getTime(&d);
 					Serial.print(F("Time (ms): "));
 					Serial.print(d.time);
@@ -121,7 +121,7 @@ void cl_debugMode(DATA d){
 			case 'd':
 				delay(100);
 				cl_getTime(&d);
-				avs_read(&d);
+				Serial.println(avs_read(&d));
 				nff_getData(&d);
 				Serial.println(F("DUMP:"));
 				// dump nff, flowmeter, etc
@@ -192,6 +192,16 @@ void cl_debugMode(DATA d){
 				Serial.print(F("EEPROM (AFTER): "));
 				Serial.println(EEPROM.get(1, temp));
 				break;
+			case 'p':
+				Serial.println(F("TOGGLING MOSFET PIN"));
+				digitalWrite(MOSFET_PIN, !digitalRead(MOSFET_PIN));
+				break;
+			case 'c':
+				avs_read(&d);
+				Serial.print(F("CURRENT (mA): "));
+				Serial.println(d.SENSE[3] / 25);
+				Serial.print(F("BUS VOLTAGE (V): "));
+				Serial.println(d.SENSE[2] * 0.001);
 		}
 	}
 }

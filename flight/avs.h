@@ -85,7 +85,7 @@ uint16_t read16(uint8_t reg);
 void write16(uint8_t reg, uint16_t val);
 void avs_init();
 void av_read(int16_t* A, int16_t* M, int16_t* G);
-void avs_read(DATA* d);
+float avs_read(DATA* d);
 void av_read(int16_t* V);
 void sense_read(int16_t* buf);
 

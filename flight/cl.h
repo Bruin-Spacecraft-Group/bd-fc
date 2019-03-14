@@ -15,6 +15,7 @@
 // NOTE: THIS IS CASE SENSITIVE
 // ALSO PFF DOESN'T LET US USE LOWER CASE
 #define SAVE_FILE "WRITE.TXT"
+#define MOSFET_PIN 8
 
 typedef struct{
 	unsigned char FLAGS;

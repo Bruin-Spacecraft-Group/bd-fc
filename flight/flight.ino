@@ -30,6 +30,7 @@ void ir(){
 }
 
 void setup() {
+  pinMode(MOSFET_PIN, OUTPUT);
   // Set baud rate to 115200 (Default serial configureation is 8N1)
   Serial.begin(115200);
   // Set timeout to 20ms (It may take up to 17ms for all of the data to
@@ -52,12 +53,10 @@ void setup() {
 
 void loop() {
   cl_getTime(&d);
-  // blocking? watchdog? terminate after time?
   avs_read(&d);
-  while (!Serial.available())
-    ;
-  nff_datapoint = nff_getData(&d);
+  if (Serial.available()){
+  	nff_datapoint = nff_getData(&d);
+  }
   Serial.println(nff_datapoint);
   cl_sdWrite(&d);
-  delay(90);
 }

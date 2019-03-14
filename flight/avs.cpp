@@ -96,14 +96,22 @@ void avs_init(){
 	write16(INA219_REG_CONFIG, INA219_CONFIGVALUE);
 }
 
-void avs_read(DATA* d){
+float avs_read(DATA* d){
+	float calc;
 	// Unwrap and rewrap:
 	// dereference d's AV array, and point at which one it wants
 	// ==> all are polling at 12.5 hz or once every 0.08 sec;
 	for(int av_DATAROW = 0; av_DATAROW < 16; av_DATAROW++){
 		av_read((int16_t*) &(d->AV)[av_DATAROW]);
+		calc += sqrt(((d->AV)[av_DATAROW][0] ^ 2) + \
+				((d->AV)[av_DATAROW][1] ^ 2) + \
+				((d->AV)[av_DATAROW][2] ^ 2));
 	}
 	sense_read((int16_t*) d->SENSE);
+	// TODO: check how bad this actually is (timing is everything)
+	// TODO: calculate expected and return values (match nff)
+	calc /= 16;
+	return calc;
 }
 
 void sense_read(int16_t* buf){
