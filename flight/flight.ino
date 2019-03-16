@@ -24,10 +24,6 @@
 
 DATA d; // see cl.h for DATA struct
 
-void ir(){
-  d.FLOW++;
-}
-
 void setup() {
   pinMode(MOSFET_PIN, OUTPUT);
   // Set baud rate to 115200 (Default serial configureation is 8N1)
@@ -42,12 +38,11 @@ void setup() {
   cl_sdInit();
   // Check whether A0 & 5V are connected; if yes, drop to debug mode
   cl_setDebugFlag(&d);
-  // TODO: remove always debug
-  digitalWrite(2, HIGH);
-  attachInterrupt(digitalPinToInterrupt(2), ir, RISING);
+
+  cl_setupInterrupt();
   if (1 || bitRead(d.FLAGS, FLAG_DEBUG)) {
     Serial.println(F("Entering Debug Mode"));
-    cl_debugMode(d);
+    cl_debugMode(&d);
   }
 }
 

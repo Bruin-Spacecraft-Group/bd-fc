@@ -10,6 +10,7 @@
 
 FATFS cl_sdVolume;
 UINT cl_sdBytesWritten;
+volatile int ISR_FLOW = 0;
 
 // any for(;;) eventually triggers the watchdog and causes a reset
 
@@ -56,8 +57,22 @@ void cl_getTime(DATA* d){
 	d->time = millis();
 }
 
-// we pass the entire datastructure here because time is not critical
-void cl_debugMode(DATA d){
+void cl_ISR(){
+	ISR_FLOW++;
+}
+
+void cl_setupInterrupt(){
+	digitalWrite(2, HIGH);
+	attachInterrupt(digitalPinToInterrupt(2), cl_ISR, CHANGE);
+}
+
+int cl_getFlow(){
+	int a = ISR_FLOW;
+	ISR_FLOW = 0;
+	return a;
+}
+
+void cl_debugMode(DATA* d){
 	while(true){
 		if(!Serial.available())
 			continue;
@@ -68,16 +83,16 @@ void cl_debugMode(DATA d){
 				// actual data points
 				Serial.println(F("\nTesting accelerometer:"));
 				for(int i = 0; i < 16; i++){
-					Serial.println(avs_read(&d));
-					cl_getTime(&d);
+					Serial.println(avs_read(d));
+					cl_getTime(d);
 					Serial.print(F("Time (ms): "));
-					Serial.print(d.time);
+					Serial.print(d->time);
 					Serial.print(F(" x: "));
-					Serial.print((float)d.AV[i][0]*ACCEL_MG_LSB/1000);
+					Serial.print((float)d->AV[i][0]*ACCEL_MG_LSB/1000);
 					Serial.print(F(" y: "));
-					Serial.print((float)d.AV[i][1]*ACCEL_MG_LSB/1000);
+					Serial.print((float)d->AV[i][1]*ACCEL_MG_LSB/1000);
 					Serial.print(F(" z: "));
-					Serial.println((float)d.AV[i][2]*ACCEL_MG_LSB/1000);
+					Serial.println((float)d->AV[i][2]*ACCEL_MG_LSB/1000);
 					delay(100);
 				}
 				break;
@@ -86,66 +101,68 @@ void cl_debugMode(DATA d){
 				// actual data points
 				Serial.println(F("\nTesting gyroscope:"));
 				for(int i = 0; i < 16; i++){
-					Serial.println(avs_read(&d));
-					cl_getTime(&d);
+					Serial.println(avs_read(d));
+					cl_getTime(d);
 					Serial.print(F("Time (ms): "));
-					Serial.print(d.time);
+					Serial.print(d->time);
 					Serial.print(F(" x: "));
-					Serial.print((float)d.AV[i][6]*GYRO_DPS_DIGIT/1000);
+					Serial.print((float)d->AV[i][6]*GYRO_DPS_DIGIT/1000);
 					Serial.print(F(" y: "));
-					Serial.print((float)d.AV[i][7]*GYRO_DPS_DIGIT/1000);
+					Serial.print((float)d->AV[i][7]*GYRO_DPS_DIGIT/1000);
 					Serial.print(F(" z: "));
-					Serial.println((float)d.AV[i][8]*GYRO_DPS_DIGIT/1000);
+					Serial.println((float)d->AV[i][8]*GYRO_DPS_DIGIT/1000);
 					delay(100);
 				}
 				break;
 			case 'm':
 				// av_read returns raw data, for testing use
 				// actual data points
+				// TODO: Remove the Serial.println stuff
 				Serial.println(F("\nTesting magnetometer:"));
 				for(int i = 0; i < 16; i++){
-					Serial.println(avs_read(&d));
-					cl_getTime(&d);
+					Serial.println(avs_read(d));
+					cl_getTime(d);
 					Serial.print(F("Time (ms): "));
-					Serial.print(d.time);
+					Serial.print(d->time);
 					Serial.print(F(" x: "));
-					Serial.print((float)d.AV[i][3]*MAG_MGAUSS_LSB/1000);
+					Serial.print((float)d->AV[i][3]*MAG_MGAUSS_LSB/1000);
 					Serial.print(F(" y: "));
-					Serial.print((float)d.AV[i][4]*MAG_MGAUSS_LSB/1000);
+					Serial.print((float)d->AV[i][4]*MAG_MGAUSS_LSB/1000);
 					Serial.print(F(" z: "));
-					Serial.println((float)d.AV[i][5]*MAG_MGAUSS_LSB/1000);
+					Serial.println((float)d->AV[i][5]*MAG_MGAUSS_LSB/1000);
 					delay(100);
 				}
 				break;
 
 			case 'd':
 				delay(100);
-				cl_getTime(&d);
-				Serial.println(avs_read(&d));
-				nff_getData(&d);
+				cl_getTime(d);
+				Serial.println(avs_read(d));
+				nff_getData(d);
 				Serial.println(F("DUMP:"));
 				// dump nff, flowmeter, etc
-				Serial.println(d.FLAGS);
-				Serial.println(d.time);
-				Serial.println(d.SD_ADDR);
-				for(int i = 0; i < 204; i++){
-					Serial.print(char(d.NFF[i]));
+				Serial.println(d->FLAGS);
+				Serial.println(d->SD_ADDR);
+				Serial.println(d->time);
+				for(int i = 0; i < 200; i++){
+					Serial.print(char(d->NFF[i]));
 					Serial.print(" ");
 				}
 				Serial.println();
 				for(int i = 0; i < 4; i++){
-					Serial.print(d.SENSE[i]);
+					Serial.print(d->SENSE[i]);
 					Serial.print(" ");
 				}
 				Serial.println();
 				for(int i = 0; i < 16; i++){
 					for(int j = 0; j < 9; j++){
-						Serial.print(d.AV[i][j]);
+						Serial.print(d->AV[i][j]);
 						Serial.print(" ");
 					}
 					Serial.println();
 				}
-				Serial.println(d.FLOW);
+				d->FLOW = cl_getFlow();
+				Serial.println(d->FLOW);
 				Serial.println(F("END OF DUMP"));
 				break;
 
@@ -155,17 +172,17 @@ void cl_debugMode(DATA d){
 				unsigned long e;
 				Serial.print(F("NFF TIME: "));
 				b = micros();
-				nff_getData(&d);
+				nff_getData(d);
 				e = micros();
 				Serial.println(e - b);
 				Serial.print(F("AVS TIME: "));
 				b = micros();
-				avs_read(&d);
+				avs_read(d);
 				e = micros();
 				Serial.println(e - b);
 				Serial.print(F("WRITE TIME: "));
 				b = micros();
-				cl_sdWrite(&d);
+				cl_sdWrite(d);
 				e = micros();
 				Serial.println(e - b);
 				Serial.println();
@@ -174,13 +191,13 @@ void cl_debugMode(DATA d){
 			case 's':
 				delay(100);
 				Serial.print(F("NFF RETURN GIVEN DATA: "));
-				Serial.println(nff_getData(&d));
+				Serial.println(nff_getData(d));
 				break;
 
 			case 'e':
 				Serial.println(F("CLEANING EEPROM"));
 				for(int i = 0; i < 256; i++)
-					EEPROM.put(i, 0);
+					EEPROM.put(i, 1);
 				break;
 			
 			case 'w':
@@ -188,20 +205,22 @@ void cl_debugMode(DATA d){
 				Serial.print(F("EEPROM (BEFORE): "));
 				unsigned long temp;
 				Serial.println(EEPROM.get(1, temp));
-				cl_sdWrite(&d);
+				cl_sdWrite(d);
 				Serial.print(F("EEPROM (AFTER): "));
 				Serial.println(EEPROM.get(1, temp));
 				break;
 			case 'p':
 				Serial.println(F("TOGGLING MOSFET PIN"));
 				digitalWrite(MOSFET_PIN, !digitalRead(MOSFET_PIN));
+				Serial.print(F("MOSFET PIN NOW "));
+				Serial.println(digitalRead(MOSFET_PIN) ? "ON" : "OFF");
 				break;
 			case 'c':
-				avs_read(&d);
+				avs_read(d);
 				Serial.print(F("CURRENT (mA): "));
-				Serial.println((float)d.SENSE[2] / 25);
+				Serial.println((float)d->SENSE[2] / 25);
 				Serial.print(F("BUS VOLTAGE (V): "));
-				Serial.println(d.SENSE[1] * 0.001);
+				Serial.println(d->SENSE[1] * 0.001);
 		}
 	}
 }
