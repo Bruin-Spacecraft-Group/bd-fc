@@ -29,7 +29,6 @@ void cl_sdInit(){
 }
 
 void cl_sdWrite(DATA* d){
-	EEPROM.get(1, d->SD_ADDR);
 	pf_lseek(d->SD_ADDR);
 	noInterrupts();
 	FRESULT fc = pf_write((byte*)d, 512, &cl_sdBytesWritten);
@@ -67,16 +66,16 @@ void cl_comb(DATA* d){
 	int avs = (bitRead(d->FLAGS, FLAG_AVS_H) * 2) + bitRead(d->FLAGS, FLAG_AVS_L);
 	if(bitRead(d->FLAGS, FLAG_MOSFET)){
 		// look for turnoff signals
-		if(avs == 3 || nff == 3 || d > TIMER_TIME){
+		if(avs == 3 || nff == 3 || t > TIMER_TIME){
 			digitalWrite(MOSFET_PIN, LOW);
 			bitWrite(d->FLAGS, FLAG_DONE, 1);
-			bitWrite(d->FALGS, FLAG_MOSFET, 0);
+			bitWrite(d->FLAGS, FLAG_MOSFET, 0);
 			return;
 		}
 	}
 	else{
 		// if neither is toggled
-		if(avs != 2 && nff != 2)
+		if(avs != 2 && nff != 2){
 			// if the timer has not been set, try setting it
 			if((avs == 1 || nff == 1) && !(d->trigger_time)){
 				d->trigger_time = d->time;
@@ -86,7 +85,7 @@ void cl_comb(DATA* d){
 			if(avs == 0 && nff == 0)
 				return;
 			// < can account for negative and zero (TODO: reason it out)
-			if(d < TIMER_TIME)
+			if(t < TIMER_TIME)
 				return;
 		}
 		// if this code is run, it means either avs/nff is 2 or timer is set and done
@@ -108,9 +107,16 @@ void cl_ISR(){
 }
 
 void cl_resetState(DATA* d){
-	// Items that would need to be reset:
-	// FLAGS, MOSFET, trigger time, time, etc?
-	// time might have to start counting from zero, in which case we reset the start
+	EEPROM.get(0, d->FLAGS);
+	unsigned long ot, tt;
+	EEPROM.get(5, ot);
+	EEPROM.get(9, tt);
+	unsigned long t = tt - ot;
+	if(t > 0){
+		// a valid timer was running; take the timer difference and set the trigger time to that
+		d->trigger_time = t - TIMER_TIME;
+	}
+	EEPROM.get(1, d->SD_ADDR);
 }
 
 void cl_setupInterrupt(){
@@ -248,6 +254,7 @@ void cl_debugMode(DATA* d){
 				Serial.println(F("CLEANING EEPROM"));
 				for(int i = 0; i < 256; i++)
 					EEPROM.put(i, 0);
+				d->SD_ADDR = 0;
 				break;
 			
 			case 'w':
