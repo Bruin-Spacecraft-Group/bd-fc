@@ -54,6 +54,50 @@ void cl_setDebugFlag(DATA* d){
 	bitWrite(d->FLAGS, FLAG_DEBUG, (analogRead(A0) == 1023));
 }
 
+void cl_comb(DATA* d){
+	// Also update flow flag here
+	if(!bitRead(d->FLAGS, FLAG_FLOW))
+		bitWrite(d->FLAGS, FLAG_FLOW, 1);
+	// skip this entire section if it we're done
+	if(bitRead(d->FLAGS, FLAG_DONE))
+		return;
+	unsigned long t = d->time - d->trigger_time;
+	// expand bits
+	int nff = (bitRead(d->FLAGS, FLAG_NFF_H) * 2) + bitRead(d->FLAGS, FLAG_NFF_L);
+	int avs = (bitRead(d->FLAGS, FLAG_AVS_H) * 2) + bitRead(d->FLAGS, FLAG_AVS_L);
+	if(bitRead(d->FLAGS, FLAG_MOSFET)){
+		// look for turnoff signals
+		if(avs == 3 || nff == 3 || d > TIMER_TIME){
+			digitalWrite(MOSFET_PIN, LOW);
+			bitWrite(d->FLAGS, FLAG_DONE, 1);
+			bitWrite(d->FALGS, FLAG_MOSFET, 0);
+			return;
+		}
+	}
+	else{
+		// if neither is toggled
+		if(avs != 2 && nff != 2)
+			// if the timer has not been set, try setting it
+			if((avs == 1 || nff == 1) && !(d->trigger_time)){
+				d->trigger_time = d->time;
+				EEPROM.put(9, d->trigger_time);
+				return;
+			}
+			if(avs == 0 && nff == 0)
+				return;
+			// < can account for negative and zero (TODO: reason it out)
+			if(d < TIMER_TIME)
+				return;
+		}
+		// if this code is run, it means either avs/nff is 2 or timer is set and done
+		d->trigger_time = d->time;
+		EEPROM.put(9, d->trigger_time);
+		digitalWrite(MOSFET_PIN, HIGH);
+		bitWrite(d->FLAGS, FLAG_MOSFET, 1);
+	}	
+
+}
+
 void cl_getTime(DATA* d){
 	d->time = millis();
 	EEPROM.put(5, d->time);
