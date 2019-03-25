@@ -36,10 +36,13 @@ void setup() {
   avs_init();
   // Initialize the SD workspace
   cl_sdInit();
+  // Setup flowmeter ISR
+  cl_setupInterrupt();
   // Check whether A0 & 5V are connected; if yes, drop to debug mode
   cl_setDebugFlag(&d);
-
-  cl_setupInterrupt();
+  // Restore mosfet if it was triggered before
+  cl_resetState(&d);
+  // TODO: this needs to be change back to read debug only before flight!
   if (1 || bitRead(d.FLAGS, FLAG_DEBUG)) {
     Serial.println(F("Entering Debug Mode"));
     cl_debugMode(&d);

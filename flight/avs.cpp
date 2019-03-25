@@ -1,4 +1,5 @@
 #include "avs.h"
+#include "cl.h"
 
 byte readBuffer(bool type, byte reg, byte len, uint8_t *buffer){
 	byte address;
@@ -96,22 +97,37 @@ void avs_init(){
 	write16(INA219_REG_CONFIG, INA219_CONFIGVALUE);
 }
 
-float avs_read(DATA* d){
-	float calc;
+void avs_read(DATA* d){
+	float avg = 0.0;
+	float x_avg = 0.0;
 	// Unwrap and rewrap:
 	// dereference d's AV array, and point at which one it wants
 	// ==> all are polling at 12.5 hz or once every 0.08 sec;
 	for(int av_DATAROW = 0; av_DATAROW < 16; av_DATAROW++){
 		av_read((int16_t*) &(d->AV)[av_DATAROW]);
-		calc += sqrt(((d->AV)[av_DATAROW][0] ^ 2) + \
-				((d->AV)[av_DATAROW][1] ^ 2) + \
-				((d->AV)[av_DATAROW][2] ^ 2));
+		avg += sqrt(sq((d->AV)[av_DATAROW][0]) + \
+			sq((d->AV)[av_DATAROW][1]) + \
+			sq((d->AV)[av_DATAROW][2]));
+		x_avg += (d->AV[av_DATAROW][0]);
 	}
 	sense_read((int16_t*) d->SENSE);
-	// TODO: check how bad this actually is (timing is everything)
-	// TODO: calculate expected and return values (match nff)
-	calc /= 16;
-	return calc;
+	avg /= 16.0; x_avg /= 16.0;
+	if(avg > AVG_HIGH_TRIGGER && x_avg > XAVG_HIGH_TRIGGER){
+		bitWrite(d->FLAGS, FLAG_AVS_H, 0);
+		bitWrite(d->FLAGS, FLAG_AVS_L, 1);
+
+	}
+	else if(abs(avg) < AVG_LOW_TRIGGER && abs(x_avg) < XAVG_LOW_TRIGGER){
+		bitWrite(d->FLAGS, FLAG_AVS_H, 1);
+		bitWrite(d->FLAGS, FLAG_AVS_L, 0);
+
+	}
+	else if(abs(avg) > AVG_HIGH_TRIGGER && x_avg < XAVG_NEG_TRIGGER){
+		bitWrite(d->FLAGS, FLAG_AVS_H, 1);
+		bitWrite(d->FLAGS, FLAG_AVS_L, 1);
+
+	}
+	return;
 }
 
 void sense_read(int16_t* buf){

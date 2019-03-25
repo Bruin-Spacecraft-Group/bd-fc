@@ -12,12 +12,13 @@ FATFS cl_sdVolume;
 UINT cl_sdBytesWritten;
 volatile int ISR_FLOW = 0;
 
-// any for(;;) eventually triggers the watchdog and causes a reset
+// any for(;;) eventually triggers the watchdog and causes a reset TODO: no more watchdog, fix this
 
 void cl_sdInit(){
 	FRESULT fc = pf_mount(&cl_sdVolume);
 	if(fc){
-		Serial.println("problem mounting");
+		Serial.print("problem mounting: ");
+		Serial.println(fc);
 		for(;;);
 	}
 	fc = pf_open(SAVE_FILE);
@@ -30,9 +31,9 @@ void cl_sdInit(){
 void cl_sdWrite(DATA* d){
 	EEPROM.get(1, d->SD_ADDR);
 	pf_lseek(d->SD_ADDR);
-//	noInterrupts();
+	noInterrupts();
 	FRESULT fc = pf_write((byte*)d, 512, &cl_sdBytesWritten);
-//	interrupts();
+	interrupts();
 	if(fc || cl_sdBytesWritten != 512){
 		Serial.println(cl_sdBytesWritten);
 		Serial.println("problem writing");
@@ -55,10 +56,17 @@ void cl_setDebugFlag(DATA* d){
 
 void cl_getTime(DATA* d){
 	d->time = millis();
+	EEPROM.put(5, d->time);
 }
 
 void cl_ISR(){
 	ISR_FLOW++;
+}
+
+void cl_resetState(DATA* d){
+	// Items that would need to be reset:
+	// FLAGS, MOSFET, trigger time, time, etc?
+	// time might have to start counting from zero, in which case we reset the start
 }
 
 void cl_setupInterrupt(){
@@ -83,7 +91,7 @@ void cl_debugMode(DATA* d){
 				// actual data points
 				Serial.println(F("\nTesting accelerometer:"));
 				for(int i = 0; i < 16; i++){
-					Serial.println(avs_read(d));
+					avs_read(d);
 					cl_getTime(d);
 					Serial.print(F("Time (ms): "));
 					Serial.print(d->time);
@@ -101,7 +109,7 @@ void cl_debugMode(DATA* d){
 				// actual data points
 				Serial.println(F("\nTesting gyroscope:"));
 				for(int i = 0; i < 16; i++){
-					Serial.println(avs_read(d));
+					avs_read(d);
 					cl_getTime(d);
 					Serial.print(F("Time (ms): "));
 					Serial.print(d->time);
@@ -117,10 +125,9 @@ void cl_debugMode(DATA* d){
 			case 'm':
 				// av_read returns raw data, for testing use
 				// actual data points
-				// TODO: Remove the Serial.println stuff
 				Serial.println(F("\nTesting magnetometer:"));
 				for(int i = 0; i < 16; i++){
-					Serial.println(avs_read(d));
+					avs_read(d);
 					cl_getTime(d);
 					Serial.print(F("Time (ms): "));
 					Serial.print(d->time);
@@ -137,7 +144,7 @@ void cl_debugMode(DATA* d){
 			case 'd':
 				delay(100);
 				cl_getTime(d);
-				Serial.println(avs_read(d));
+				avs_read(d);
 				nff_getData(d);
 				Serial.println(F("DUMP:"));
 				// dump nff, flowmeter, etc
@@ -191,13 +198,12 @@ void cl_debugMode(DATA* d){
 			case 's':
 				delay(100);
 				Serial.print(F("NFF RETURN GIVEN DATA: "));
-				Serial.println(nff_getData(d));
 				break;
 
 			case 'e':
 				Serial.println(F("CLEANING EEPROM"));
 				for(int i = 0; i < 256; i++)
-					EEPROM.put(i, 1);
+					EEPROM.put(i, 0);
 				break;
 			
 			case 'w':
@@ -221,6 +227,12 @@ void cl_debugMode(DATA* d){
 				Serial.println((float)d->SENSE[2] / 25);
 				Serial.print(F("BUS VOLTAGE (V): "));
 				Serial.println(d->SENSE[1] * 0.001);
+				break;
+			case 'f':
+				Serial.print(F("Pulses detected: "));
+				d->FLOW = cl_getFlow();
+				Serial.println(d->FLOW);
+				break;
 		}
 	}
 }

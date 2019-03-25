@@ -56,5 +56,6 @@ void cl_debugMode(DATA* d);
 void cl_getTime(DATA* d);
 void cl_sdInit();
 void cl_sdWrite(DATA* d);
+void cl_resetState(DATA* d);
 
 #endif

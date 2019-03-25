@@ -2,22 +2,31 @@
 #include "cl.h"
 #include <Arduino.h>
 
-/* Return types:
- * 0: nothing
- * 1: microgravity imminent
- * 2: microgravity ended (shut down most features)
- */
-int nff_getData(DATA* d) {
+void nff_getData(DATA* d) {
 	if(!Serial.available())
 		return 0;
 	int len = Serial.readBytes(d->NFF, 200);
 	int l = 0;
 	while (l < len) {
-		if (d->NFF[l] == 'C')
-			return 1;
-		if (d->NFF[l] == 'F')
-			return 2;
+		if (d->NFF[l] == 'C'){
+			bitWrite(d->FLAGS, FLAG_NFF_H, 1);
+			bitWrite(d->FLAGS, FLAG_NFF_L, 0);
+			return;
+		}
+		if (d->NFF[l] == 'F'){
+			bitWrite(d->FLAGS, FLAG_NFF_H, 1);
+			bitWrite(d->FLAGS, FLAG_NFF_L, 1);
+			return;
+		}
+		if (d->NFF[l] == 'L'){
+			bitWrite(d->FLAGS, FLAG_NFF_H, 0);
+			bitWrite(d->FLAGS, FLAG_NFF_L, 1);
+			return;
+		}
 		l++;
 	}
-	return 0;
+	bitWrite(d->FLAGS, FLAG_NFF_H, 0);
+	bitWrite(d->FLAGS, FLAG_NFF_L, 0);
+	return;
 }
+
