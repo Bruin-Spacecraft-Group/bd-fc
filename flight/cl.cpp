@@ -108,6 +108,8 @@ void cl_ISR(){
 
 void cl_resetState(DATA* d){
 	EEPROM.get(0, d->FLAGS);
+	// restore MOSFET pin
+	digitalWrite(MOSFET_PIN, bitRead(d->FLAGS, FLAG_MOSFET));
 	unsigned long ot, tt;
 	EEPROM.get(5, ot);
 	EEPROM.get(9, tt);
