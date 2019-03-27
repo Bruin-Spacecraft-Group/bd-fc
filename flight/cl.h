@@ -14,9 +14,9 @@
 #define FLAG_NFF_H 4
 #define FLAG_NFF_L 3
 /* FLAG_NFF_H | FLAG_NFF_L | Status
- * 1|1|F return: turn off mosfet
- * 1|0|C return: turn on mosfet/unset timer
- * 0|1|L return: set timer
+ * 1|1|H return: turn off mosfet
+ * 1|0|F return: turn on mosfet/unset timer
+ * 0|1|C return: set timer
  * 0|0|No return found yet (RETURN TO STATE)
  */
 #define FLAG_AVS_H 2

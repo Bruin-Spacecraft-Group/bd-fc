@@ -3,12 +3,12 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include "cl.h"
-
-#define AVG_HIGH_TRIGGER 0
-#define AVG_LOW_TRIGGER 0
-#define XAVG_HIGH_TRIGGER 0
-#define XAVG_LOW_TRIGGER 0
-#define XAVG_NEG_TRIGGER 0
+// TODO: clarify these values
+#define AVG_HIGH_TRIGGER 16000
+#define AVG_LOW_TRIGGER 100
+#define XAVG_HIGH_TRIGGER 16000
+#define XAVG_LOW_TRIGGER 100
+#define XAVG_NEG_TRIGGER 30000
 
 
 #define LSM9DS0_ADDRESS_ACCELMAG           (0x1D)         // 3B >> 1 = 7bit default

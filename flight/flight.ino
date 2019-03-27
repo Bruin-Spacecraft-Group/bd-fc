@@ -55,5 +55,6 @@ void loop() {
   if (Serial.available()){
   	nff_getData(&d);
   }
+  cl_comb(&d);
   cl_sdWrite(&d);
 }
