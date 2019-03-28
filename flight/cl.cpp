@@ -200,6 +200,7 @@ void cl_debugMode(DATA* d){
 			case 's':
 				// Wait 100 ms to load all nff data in serial buffer into dataframe
 				delay(100);
+				nff_getData();
 				Serial.println(F("NFF DATA LOADED INTO DATAFRAME"));
 				break;
 			case 'd':
@@ -231,12 +232,6 @@ void cl_debugMode(DATA* d){
 				Serial.println(d->FLOW);
 				Serial.println(F("END OF DUMP------"));
 				break;
-			case 'p':
-				Serial.println(F("TOGGLING MOSFET PIN"));
-				digitalWrite(MOSFET_PIN, !digitalRead(MOSFET_PIN));
-				Serial.print(F("MOSFET PIN NOW "));
-				Serial.println(digitalRead(MOSFET_PIN) ? "ON" : "OFF");
-				break;
 			case 'f':
 				Serial.print(F("PULSES DETECTED: "));
 				cl_getFlow();
@@ -248,7 +243,7 @@ void cl_debugMode(DATA* d){
 				Serial.println(F("RESETTING"));
 				for(int i = 0; i < 256; i++)
 					EEPROM.put(i, 0);
-				memcpy(d, 0, 512);
+				memset(d, 0, 512);
 				break;
 
 			// Other utilities
@@ -273,6 +268,12 @@ void cl_debugMode(DATA* d){
 				Serial.println(e - b);
 				Serial.println();
 				break;
+			case 'p':
+				Serial.println(F("TOGGLING MOSFET PIN"));
+				digitalWrite(MOSFET_PIN, !digitalRead(MOSFET_PIN));
+				Serial.print(F("MOSFET PIN NOW "));
+				Serial.println(digitalRead(MOSFET_PIN) ? "ON" : "OFF");
+				break;
 			case 'w':
 				Serial.println(F("WRITING TO SD CARD"));
 				Serial.print(F("EEPROM (BEFORE): "));
@@ -282,6 +283,20 @@ void cl_debugMode(DATA* d){
 				Serial.print(F("EEPROM (AFTER): "));
 				Serial.println(EEPROM.get(1, temp));
 				break;
+			case 'l':
+				// Test cl_comb function
+				Serial.print(F("FLAGS: "));
+				for(int i = 0; i < 7; i++)
+					Serial.print(bitRead(d->FLAGS, i));
+				Serial.println();
+				Serial.print(F("TRIGGER TIME: "));
+				Serial.println(d->trigger_time);
+				Serial.print(F("FLAGS AFTER COMB: "));
+				for(int i = 0; i < 7; i++)
+					Serial.print(bitRead(d->FLAGS, i));
+				Serial.println();
+				Serial.print(F("TRIGGER TIME AFTER COMB: "));
+				Serial.println(d->trigger_time);
 		}
 	}
 }
