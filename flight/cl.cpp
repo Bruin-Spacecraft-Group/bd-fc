@@ -200,7 +200,7 @@ void cl_debugMode(DATA* d){
 			case 's':
 				// Wait 100 ms to load all nff data in serial buffer into dataframe
 				delay(100);
-				nff_getData();
+				nff_getData(d);
 				Serial.println(F("NFF DATA LOADED INTO DATAFRAME"));
 				break;
 			case 'd':

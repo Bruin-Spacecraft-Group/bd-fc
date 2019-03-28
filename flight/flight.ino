@@ -43,7 +43,7 @@ void setup() {
   // Restore mosfet if it was triggered before
   cl_resetState(&d);
   // TODO: this needs to be change back to read debug only before flight!
-  if (1 || bitRead(d.FLAGS, FLAG_DEBUG)) {
+  if (bitRead(d.FLAGS, FLAG_DEBUG)||1) {
     Serial.println(F("Entering Debug Mode"));
     cl_debugMode(&d);
   }
