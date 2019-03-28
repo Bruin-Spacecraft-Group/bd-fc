@@ -138,9 +138,8 @@ void cl_debugMode(DATA* d){
 			continue;
 		char x = Serial.read();
 		switch(x){
+			// Avionics board tests
 			case 'a':
-				// av_read returns raw data, for testing use
-				// actual data points
 				Serial.println(F("\nTesting accelerometer:"));
 				for(int i = 0; i < 16; i++){
 					avs_read(d);
@@ -157,8 +156,6 @@ void cl_debugMode(DATA* d){
 				}
 				break;
 			case 'g':
-				// av_read returns raw data, for testing use
-				// actual data points
 				Serial.println(F("\nTesting gyroscope:"));
 				for(int i = 0; i < 16; i++){
 					avs_read(d);
@@ -175,8 +172,6 @@ void cl_debugMode(DATA* d){
 				}
 				break;
 			case 'm':
-				// av_read returns raw data, for testing use
-				// actual data points
 				Serial.println(F("\nTesting magnetometer:"));
 				for(int i = 0; i < 16; i++){
 					avs_read(d);
@@ -192,20 +187,33 @@ void cl_debugMode(DATA* d){
 					delay(100);
 				}
 				break;
-
-			case 'd':
-				delay(100);
-				cl_getTime(d);
+			case 'c':
 				avs_read(d);
-				nff_getData(d);
-				Serial.println(F("DUMP:"));
+				Serial.print(F("CURRENT (mA): "));
+				Serial.println((float)d->SENSE[2] / 25);
+				Serial.print(F("BUS VOLTAGE (V): "));
+				Serial.println(d->SENSE[1] * 0.001);
+				break;
+			
+
+			// Data aquisition / export
+			case 's':
+				// Wait 100 ms to load all nff data in serial buffer into dataframe
+				delay(100);
+				Serial.println(F("NFF DATA LOADED INTO DATAFRAME"));
+				break;
+			case 'd':
+				// dump all data in the dataframe
+				Serial.println(F("DUMP:++++++"));
 				// dump nff, flowmeter, etc
-				Serial.println(d->FLAGS);
+				for(int i = 0; i < 7; i++)
+					Serial.print(bitRead(d->FLAGS, i));
+				Serial.println();
 				Serial.println(d->SD_ADDR);
 				Serial.println(d->time);
 				for(int i = 0; i < 200; i++){
 					Serial.print(char(d->NFF[i]));
-					Serial.print(" ");
+					Serial.print("");
 				}
 				Serial.println();
 				for(int i = 0; i < 4; i++){
@@ -220,15 +228,34 @@ void cl_debugMode(DATA* d){
 					}
 					Serial.println();
 				}
+				Serial.println(d->FLOW);
+				Serial.println(F("END OF DUMP------"));
+				break;
+			case 'p':
+				Serial.println(F("TOGGLING MOSFET PIN"));
+				digitalWrite(MOSFET_PIN, !digitalRead(MOSFET_PIN));
+				Serial.print(F("MOSFET PIN NOW "));
+				Serial.println(digitalRead(MOSFET_PIN) ? "ON" : "OFF");
+				break;
+			case 'f':
+				Serial.print(F("PULSES DETECTED: "));
+				cl_getFlow();
+				delay(1000);
 				d->FLOW = cl_getFlow();
 				Serial.println(d->FLOW);
-				Serial.println(F("END OF DUMP"));
+				break;
+			case 'r':
+				Serial.println(F("RESETTING"));
+				for(int i = 0; i < 256; i++)
+					EEPROM.put(i, 0);
+				memcpy(d, 0, 512);
 				break;
 
+			// Other utilities
 			case 't':
+				// t command should be appended with full NFF data string, possibly 2
 				delay(100);
-				unsigned long b;
-				unsigned long e;
+				unsigned long b, e;
 				Serial.print(F("NFF TIME: "));
 				b = micros();
 				nff_getData(d);
@@ -246,19 +273,6 @@ void cl_debugMode(DATA* d){
 				Serial.println(e - b);
 				Serial.println();
 				break;
-
-			case 's':
-				delay(100);
-				Serial.print(F("NFF RETURN GIVEN DATA: "));
-				break;
-
-			case 'e':
-				Serial.println(F("CLEANING EEPROM"));
-				for(int i = 0; i < 256; i++)
-					EEPROM.put(i, 0);
-				d->SD_ADDR = 0;
-				break;
-			
 			case 'w':
 				Serial.println(F("WRITING TO SD CARD"));
 				Serial.print(F("EEPROM (BEFORE): "));
@@ -267,24 +281,6 @@ void cl_debugMode(DATA* d){
 				cl_sdWrite(d);
 				Serial.print(F("EEPROM (AFTER): "));
 				Serial.println(EEPROM.get(1, temp));
-				break;
-			case 'p':
-				Serial.println(F("TOGGLING MOSFET PIN"));
-				digitalWrite(MOSFET_PIN, !digitalRead(MOSFET_PIN));
-				Serial.print(F("MOSFET PIN NOW "));
-				Serial.println(digitalRead(MOSFET_PIN) ? "ON" : "OFF");
-				break;
-			case 'c':
-				avs_read(d);
-				Serial.print(F("CURRENT (mA): "));
-				Serial.println((float)d->SENSE[2] / 25);
-				Serial.print(F("BUS VOLTAGE (V): "));
-				Serial.println(d->SENSE[1] * 0.001);
-				break;
-			case 'f':
-				Serial.print(F("Pulses detected: "));
-				d->FLOW = cl_getFlow();
-				Serial.println(d->FLOW);
 				break;
 		}
 	}
