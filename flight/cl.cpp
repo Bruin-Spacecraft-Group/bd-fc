@@ -6,24 +6,26 @@
 #include "avs.h"
 #include "pff.h"
 #include <Arduino.h>
+#include <avr/wdt.h>
 #include <EEPROM.h>
 
 FATFS cl_sdVolume;
 UINT cl_sdBytesWritten;
 volatile int ISR_FLOW = 0;
 
-// any for(;;) eventually triggers the watchdog and causes a reset TODO: no more watchdog, fix this
-
 void cl_sdInit(){
 	FRESULT fc = pf_mount(&cl_sdVolume);
 	if(fc){
 		Serial.print("problem mounting: ");
 		Serial.println(fc);
+		wdt_enable(WDTO_15MS);
 		for(;;);
 	}
 	fc = pf_open(SAVE_FILE);
 	if(fc){
-		Serial.println("problem opening");
+		Serial.print("problem opening: ");
+		Serial.println(fc);
+		wdt_enable(WDTO_15MS);
 		for(;;);
 	}
 }
@@ -34,32 +36,28 @@ void cl_sdWrite(DATA* d){
 	FRESULT fc = pf_write((byte*)d, 512, &cl_sdBytesWritten);
 	interrupts();
 	if(fc || cl_sdBytesWritten != 512){
+		// TODO: if problem writing, try switching to backup file?
+		Serial.print("problem writing: ");
 		Serial.println(cl_sdBytesWritten);
-		Serial.println("problem writing");
 		return;
 	}
 	fc = pf_write(0, 0, &cl_sdBytesWritten);
 	d->SD_ADDR = cl_sdVolume.fptr;
 	EEPROM.put(1, d->SD_ADDR);
 	EEPROM.put(0, d->FLAGS);
-	if(fc){
-		// why would this happen? is this important?
-		for(;;);
-	}
 }
 
 void cl_setDebugFlag(DATA* d){
-	// possible threshold?
 	bitWrite(d->FLAGS, FLAG_DEBUG, (analogRead(A0) == 1023));
 }
 
 void cl_comb(DATA* d){
-	// Also update flow flag here
-	if(!bitRead(d->FLAGS, FLAG_FLOW))
-		bitWrite(d->FLAGS, FLAG_FLOW, 1);
 	// skip this entire section if it we're done
 	if(bitRead(d->FLAGS, FLAG_DONE))
 		return;
+	// Also update flow flag here
+	if(!bitRead(d->FLAGS, FLAG_FLOW))
+		bitWrite(d->FLAGS, FLAG_FLOW, !!(d->FLOW));
 	unsigned long t = d->time - d->trigger_time;
 	// expand bits
 	int nff = (bitRead(d->FLAGS, FLAG_NFF_H) * 2) + bitRead(d->FLAGS, FLAG_NFF_L);
@@ -283,7 +281,7 @@ void cl_debugMode(DATA* d){
 				Serial.print(F("EEPROM (AFTER): "));
 				Serial.println(EEPROM.get(1, temp));
 				break;
-			case 'l':
+			case 'x':
 				// Test cl_comb function
 				Serial.print(F("FLAGS: "));
 				for(int i = 0; i < 7; i++)
@@ -297,6 +295,39 @@ void cl_debugMode(DATA* d){
 				Serial.println();
 				Serial.print(F("TRIGGER TIME AFTER COMB: "));
 				Serial.println(d->trigger_time);
+			case 'l':
+				// Emulate flight loop (resets on end)
+				Serial.println(F("FLIGHT LOOP EMULATION"))
+				Serial.println(F("PLUG IN A0-5V JUMPER TO EXIT"))
+				delay(1000);
+				while(analogRead(A0) != 1023){
+					cl_getTime(d);
+					avs_read(d);
+					nff_getData(d);
+					cl_comb(d);
+					cl_sdWrite(d);
+				}
+				wdt_enable(WDTO_15MS);
+				for(;;);
+				break;
+			case 'v':
+				// Emulate flight loop (resets on end)
+				Serial.println(F("VERBOSE LOOP EMULATION"))
+				Serial.println(F("PLUG IN A0-5V JUMPER TO EXIT"))
+				delay(1000);
+				while(analogRead(A0) != 1023){
+					delay(1000);
+					cl_getTime(d);
+					avs_read(d);
+					nff_getData(d);
+					cl_comb(d);
+					cl_sdWrite(d);
+					for(int i = 0; i < 512; i++)
+						Serial.print(((bytes*)d)[i])
+				}
+				wdt_enable(WDTO_15MS);
+				for(;;);
+				break;
 		}
 	}
 }

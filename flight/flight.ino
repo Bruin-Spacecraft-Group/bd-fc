@@ -21,10 +21,15 @@
 #include "cl.h"
 #include "avs.h"
 #include "nff.h"
+#include <avr/wdt.h>
 
 DATA d; // see cl.h for DATA struct
 
 void setup() {
+  // prime and disable watchdog
+  MCUSR = 0;
+  wdt_disable();
+  // Set MOSFET as output pin
   pinMode(MOSFET_PIN, OUTPUT);
   // Set baud rate to 115200 (Default serial configureation is 8N1)
   Serial.begin(115200);
@@ -52,9 +57,8 @@ void setup() {
 void loop() {
   cl_getTime(&d);
   avs_read(&d);
-  if (Serial.available()){
-  	nff_getData(&d);
-  }
+  nff_getData(&d);
   cl_comb(&d);
   cl_sdWrite(&d);
+  // TODO: delay until 90ish ms
 }
