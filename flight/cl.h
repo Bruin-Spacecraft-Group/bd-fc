@@ -44,7 +44,7 @@ typedef struct{
 	int SENSE[4];
 	int AV[16][9];
 	int FLOW;
-	unsigned char nul = 0x0;
+	unsigned char nul = 0x20;
 } DATA;
 
 void cl_ISR();

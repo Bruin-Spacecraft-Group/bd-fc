@@ -210,9 +210,9 @@ void cl_debugMode(DATA* d){
 				Serial.println();
 				Serial.println(d->SD_ADDR);
 				Serial.println(d->time);
+				Serial.println(d->trigger_time);
 				for(int i = 0; i < 200; i++){
-					Serial.print(char(d->NFF[i]));
-					Serial.print("");
+					Serial.print(char((d->NFF)[i]));
 				}
 				Serial.println();
 				for(int i = 0; i < 4; i++){
@@ -271,6 +271,7 @@ void cl_debugMode(DATA* d){
 				digitalWrite(MOSFET_PIN, !digitalRead(MOSFET_PIN));
 				Serial.print(F("MOSFET PIN NOW "));
 				Serial.println(digitalRead(MOSFET_PIN) ? "ON" : "OFF");
+				bitWrite(d->FLAGS, FLAG_MOSFET, digitalRead(MOSFET_PIN));
 				break;
 			case 'w':
 				Serial.println(F("WRITING TO SD CARD"));
@@ -283,22 +284,19 @@ void cl_debugMode(DATA* d){
 				break;
 			case 'x':
 				// Test cl_comb function
+				Serial.println(F("COMBING"));
+				cl_comb(d);
 				Serial.print(F("FLAGS: "));
 				for(int i = 0; i < 7; i++)
 					Serial.print(bitRead(d->FLAGS, i));
 				Serial.println();
 				Serial.print(F("TRIGGER TIME: "));
 				Serial.println(d->trigger_time);
-				Serial.print(F("FLAGS AFTER COMB: "));
-				for(int i = 0; i < 7; i++)
-					Serial.print(bitRead(d->FLAGS, i));
-				Serial.println();
-				Serial.print(F("TRIGGER TIME AFTER COMB: "));
-				Serial.println(d->trigger_time);
+				break;
 			case 'l':
 				// Emulate flight loop (resets on end)
-				Serial.println(F("FLIGHT LOOP EMULATION"))
-				Serial.println(F("PLUG IN A0-5V JUMPER TO EXIT"))
+				Serial.println(F("FLIGHT LOOP EMULATION"));
+				Serial.println(F("PLUG IN A0-5V JUMPER TO EXIT"));
 				delay(1000);
 				while(analogRead(A0) != 1023){
 					cl_getTime(d);
@@ -312,8 +310,8 @@ void cl_debugMode(DATA* d){
 				break;
 			case 'v':
 				// Emulate flight loop (resets on end)
-				Serial.println(F("VERBOSE LOOP EMULATION"))
-				Serial.println(F("PLUG IN A0-5V JUMPER TO EXIT"))
+				Serial.println(F("VERBOSE LOOP EMULATION"));
+				Serial.println(F("PLUG IN A0-5V JUMPER TO EXIT"));
 				delay(1000);
 				while(analogRead(A0) != 1023){
 					delay(1000);
@@ -323,7 +321,7 @@ void cl_debugMode(DATA* d){
 					cl_comb(d);
 					cl_sdWrite(d);
 					for(int i = 0; i < 512; i++)
-						Serial.print(((bytes*)d)[i])
+						Serial.print(((byte*)d)[i]);
 				}
 				wdt_enable(WDTO_15MS);
 				for(;;);
