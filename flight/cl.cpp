@@ -60,8 +60,8 @@ void cl_comb(DATA* d){
 		bitWrite(d->FLAGS, FLAG_FLOW, !!(d->FLOW));
 	unsigned long t = d->time - d->trigger_time;
 	// expand bits
-	int nff = (bitRead(d->FLAGS, FLAG_NFF_H) * 2) + bitRead(d->FLAGS, FLAG_NFF_L);
-	int avs = (bitRead(d->FLAGS, FLAG_AVS_H) * 2) + bitRead(d->FLAGS, FLAG_AVS_L);
+	int nff = (bitRead(d->FLAGS, FLAG_NFF_H) * 2) + bitRead(d->FLAGS, FLAG_NFF_L) * 1;
+	int avs = (bitRead(d->FLAGS, FLAG_AVS_H) * 2) + bitRead(d->FLAGS, FLAG_AVS_L) * 1;
 	if(bitRead(d->FLAGS, FLAG_MOSFET)){
 		// look for turnoff signals
 		if(avs == 3 || nff == 3 || t > TIMER_TIME){
@@ -80,6 +80,8 @@ void cl_comb(DATA* d){
 				EEPROM.put(9, d->trigger_time);
 				return;
 			}
+			if((avs == 1 || nff == 1))
+				return;
 			if(avs == 0 && nff == 0)
 				return;
 			// < can account for negative and zero (TODO: reason it out)
