@@ -8,7 +8,6 @@ int16_t current_mA = 0;
 void setup(){
   Serial.begin(115200);
   Wire.begin();
-  Serial.println("thing");
   //cur_sense.setcalibration_32v_1a();
   Wire.beginTransmission(0x40);
   Wire.write(0x05);
@@ -20,7 +19,6 @@ void setup(){
   Wire.write((14751)>>8 & 0xFF);
   Wire.write((14751)    & 0xFF);
   Wire.endTransmission();
-  Serial.println("Ready!");
 }
 
 void loop(){
