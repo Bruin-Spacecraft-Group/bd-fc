@@ -3,7 +3,7 @@
 
 #include "cl.h"
 #include "nff.h"
-#include "avs.h"
+#include "avsf.h"
 #include "pff.h"
 #include <Arduino.h>
 #include <avr/wdt.h>
@@ -11,7 +11,6 @@
 
 FATFS cl_sdVolume;
 UINT cl_sdBytesWritten;
-volatile int ISR_FLOW = 0;
 
 void cl_sdInit(){
 	FRESULT fc = pf_mount(&cl_sdVolume);
@@ -32,9 +31,7 @@ void cl_sdInit(){
 
 void cl_sdWrite(DATA* d){
 	pf_lseek(d->SD_ADDR);
-	noInterrupts();
 	FRESULT fc = pf_write((byte*)d, 512, &cl_sdBytesWritten);
-	interrupts();
 	if(fc || cl_sdBytesWritten != 512){
 		// TODO: if problem writing, try switching to backup file?
 		Serial.print("problem writing: ");
@@ -52,7 +49,7 @@ void cl_setDebugFlag(DATA* d){
 }
 
 void cl_comb(DATA* d){
-	// skip this entire section if it we're done
+	// skip this entire section if it we're done TODO: possibly update?
 	if(bitRead(d->FLAGS, FLAG_DONE))
 		return;
 	// Also update flow flag here
@@ -102,10 +99,6 @@ void cl_getTime(DATA* d){
 	EEPROM.put(5, d->time);
 }
 
-void cl_ISR(){
-	ISR_FLOW++;
-}
-
 void cl_resetState(DATA* d){
 	EEPROM.get(0, d->FLAGS);
 	// restore MOSFET pin
@@ -121,17 +114,6 @@ void cl_resetState(DATA* d){
 	EEPROM.get(1, d->SD_ADDR);
 }
 
-void cl_setupInterrupt(){
-	digitalWrite(2, HIGH);
-	attachInterrupt(digitalPinToInterrupt(2), cl_ISR, CHANGE);
-}
-
-int cl_getFlow(){
-	int a = ISR_FLOW;
-	ISR_FLOW = 0;
-	return a;
-}
-
 void cl_debugMode(DATA* d){
 	while(true){
 		if(!Serial.available())
@@ -142,7 +124,7 @@ void cl_debugMode(DATA* d){
 			case 'a':
 				Serial.println(F("\nTesting accelerometer:"));
 				for(int i = 0; i < 16; i++){
-					avs_read(d);
+					avsf_read(d);
 					cl_getTime(d);
 					Serial.print(F("Time (ms): "));
 					Serial.print(d->time);
@@ -158,7 +140,7 @@ void cl_debugMode(DATA* d){
 			case 'g':
 				Serial.println(F("\nTesting gyroscope:"));
 				for(int i = 0; i < 16; i++){
-					avs_read(d);
+					avsf_read(d);
 					cl_getTime(d);
 					Serial.print(F("Time (ms): "));
 					Serial.print(d->time);
@@ -174,7 +156,7 @@ void cl_debugMode(DATA* d){
 			case 'm':
 				Serial.println(F("\nTesting magnetometer:"));
 				for(int i = 0; i < 16; i++){
-					avs_read(d);
+					avsf_read(d);
 					cl_getTime(d);
 					Serial.print(F("Time (ms): "));
 					Serial.print(d->time);
@@ -188,7 +170,7 @@ void cl_debugMode(DATA* d){
 				}
 				break;
 			case 'c':
-				avs_read(d);
+				avsf_read(d);
 				Serial.print(F("CURRENT (mA): "));
 				Serial.println((float)d->SENSE[2] / 25);
 				Serial.print(F("BUS VOLTAGE (V): "));
@@ -233,11 +215,9 @@ void cl_debugMode(DATA* d){
 				Serial.println(F("END OF DUMP------"));
 				break;
 			case 'f':
-				Serial.print(F("PULSES DETECTED: "));
-				cl_getFlow();
-				delay(1000);
-				d->FLOW = cl_getFlow();
-				Serial.println(d->FLOW);
+				avsf_read(d);
+				Serial.print(F("FLOW (SCCM): "));
+				Serial.println((float)d->FLOW/10.0);
 				break;
 			case 'r':
 				Serial.println(F("RESETTING"));
@@ -258,7 +238,7 @@ void cl_debugMode(DATA* d){
 				Serial.println(e - b);
 				Serial.print(F("AVS TIME: "));
 				b = micros();
-				avs_read(d);
+				avsf_read(d);
 				e = micros();
 				Serial.println(e - b);
 				Serial.print(F("WRITE TIME: "));
@@ -302,7 +282,7 @@ void cl_debugMode(DATA* d){
 				delay(1000);
 				while(analogRead(A0) != 1023){
 					cl_getTime(d);
-					avs_read(d);
+					avsf_read(d);
 					nff_getData(d);
 					cl_comb(d);
 					cl_sdWrite(d);
@@ -318,7 +298,7 @@ void cl_debugMode(DATA* d){
 				while(analogRead(A0) != 1023){
 					delay(1000);
 					cl_getTime(d);
-					avs_read(d);
+					avsf_read(d);
 					nff_getData(d);
 					cl_comb(d);
 					cl_sdWrite(d);

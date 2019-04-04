@@ -19,7 +19,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////
 
 #include "cl.h"
-#include "avs.h"
+#include "avsf.h"
 #include "nff.h"
 #include <avr/wdt.h>
 
@@ -38,11 +38,9 @@ void setup() {
   // to allow for a complete transfer before timing out).
   Serial.setTimeout(20);
   // Initialize avionics board
-  avs_init();
+  avsf_init();
   // Initialize the SD workspace
   cl_sdInit();
-  // Setup flowmeter ISR
-  cl_setupInterrupt();
   // Check whether A0 & 5V are connected; if yes, drop to debug mode
   cl_setDebugFlag(&d);
   // Restore mosfet if it was triggered before
@@ -56,7 +54,7 @@ void setup() {
 
 void loop() {
   cl_getTime(&d);
-  avs_read(&d);
+  avsf_read(&d);
   nff_getData(&d);
   cl_comb(&d);
   cl_sdWrite(&d);

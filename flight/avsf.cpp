@@ -1,4 +1,4 @@
-#include "avs.h"
+#include "avsf.h"
 #include "cl.h"
 
 byte readBuffer(bool type, byte reg, byte len, uint8_t *buffer){
@@ -55,7 +55,13 @@ byte read8(bool type, byte reg){
 	return value;
 }
 
-void avs_init(){
+int16_t flow_read(){
+	Wire.requestFrom(FS2012_ADDRESS, 2);
+	int16_t a = (Wire.read() << 8) | Wire.read();
+	return a;
+}
+
+void avsf_init(){
 	// TODO: review this function and the register writes,
 	// sensitivity ranges
 	Wire.begin();
@@ -97,7 +103,7 @@ void avs_init(){
 	write16(INA219_REG_CONFIG, INA219_CONFIGVALUE);
 }
 
-void avs_read(DATA* d){
+void avsf_read(DATA* d){
 	float avg = 0.0;
 	float x_avg = 0.0;
 	// Unwrap and rewrap:
@@ -110,6 +116,7 @@ void avs_read(DATA* d){
 			sq((d->AV)[av_DATAROW][2]));
 		x_avg += (d->AV[av_DATAROW][0]);
 	}
+	d->FLOW = flow_read();
 	sense_read((int16_t*) d->SENSE);
 	avg /= 16.0; x_avg /= 16.0;
 	if(avg > AVG_HIGH_TRIGGER && x_avg > XAVG_HIGH_TRIGGER){
@@ -125,7 +132,6 @@ void avs_read(DATA* d){
 	else if(abs(avg) > AVG_HIGH_TRIGGER && x_avg < XAVG_NEG_TRIGGER){
 		bitWrite(d->FLAGS, FLAG_AVS_H, 1);
 		bitWrite(d->FLAGS, FLAG_AVS_L, 1);
-
 	}
 	return;
 }
