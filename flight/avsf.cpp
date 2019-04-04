@@ -1,4 +1,5 @@
 #include "avsf.h"
+#include "i2c.h"
 #include "cl.h"
 
 byte readBuffer(bool type, byte reg, byte len, uint8_t *buffer){
@@ -8,31 +9,23 @@ byte readBuffer(bool type, byte reg, byte len, uint8_t *buffer){
 	} else {
 		address = LSM9DS0_ADDRESS_ACCELMAG;
 	}
-	Wire.beginTransmission(address);
-	Wire.write(reg);
-	Wire.endTransmission();
-	Wire.requestFrom(address, (byte)len);
+	I2c.read(address, reg, (byte)len);
 	for (uint8_t i=0; i<len; i++) {
-		buffer[i] = Wire.read();
+		buffer[i] = I2c.recieve();
 	}
 	return len;
 }
 
 void write16(uint8_t reg, uint16_t val){
-	Wire.beginTransmission(INA219_ADDRESS);
-	Wire.write(reg);
-	Wire.write((val >> 8) & 0xFF); Wire.write(val & 0xFF);
-	Wire.endTransmission();
+	I2c.write(INA219_ADDRESS, reg, (val>>8) & 0xFF);
+	I2c.write(INA219_ADDRESS, reg, val      & 0xFF);
 }
 
 uint16_t read16(uint8_t reg){
-	Wire.beginTransmission(INA219_ADDRESS);
-	Wire.write(reg);
-	Wire.endTransmission();
+	I2c.read(INA219_ADDRESS, reg, 2);
 	uint16_t val;
 	delay(1);
-	Wire.requestFrom(INA219_ADDRESS, 2);
-	val = ((Wire.read() << 8) | Wire.read());
+	val = ((I2c.recieve()<<8) | I2c.recieve());
 	return val;
 }
 
@@ -43,10 +36,7 @@ void write8(bool type, byte reg, byte value){
 	} else {
 		address = LSM9DS0_ADDRESS_ACCELMAG;
 	}
-	Wire.beginTransmission(address);
-	Wire.write(reg);
-	Wire.write(value);
-	Wire.endTransmission();
+	I2c.write(address, reg, value);
 }
 
 byte read8(bool type, byte reg){
@@ -56,15 +46,16 @@ byte read8(bool type, byte reg){
 }
 
 int16_t flow_read(){
-	Wire.requestFrom(FS2012_ADDRESS, 2);
-	int16_t a = (Wire.read() << 8) | Wire.read();
-	return a;
+	I2c.read(FS2012_ADDRESS, 2);
+	int16_t flow = (I2c.recieve()<<8) | I2c.recieve();
+	return flow;
 }
 
 void avsf_init(){
 	// TODO: review this function and the register writes,
 	// sensitivity ranges
-	Wire.begin();
+	I2c.begin();
+	// TODO: remove infinite loops
 	uint8_t reg = read8(XMTYPE, LSM9DS0_REGISTER_WHO_AM_I_XM);
 	if (reg != LSM9DS0_XM_ID)
 		for(;;);

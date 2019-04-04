@@ -1,7 +1,6 @@
 #ifndef __AVS_H__
 #define __AVS_H__
 #include <Arduino.h>
-#include <Wire.h>
 #include "cl.h"
 // TODO: clarify these values
 #define AVG_HIGH_TRIGGER 16000
