@@ -5,9 +5,9 @@
 byte readBuffer(bool type, byte reg, byte len, uint8_t *buffer){
 	byte address;
 	if (type == GYROTYPE) {
-		address = LSM9DS0_ADDRESS_GYRO;
+		address = LSM9DS0_ADDRESS_G;
 	} else {
-		address = LSM9DS0_ADDRESS_ACCELMAG;
+		address = LSM9DS0_ADDRESS_XM;
 	}
 	I2c.read(address, reg, (byte)len);
 	for (uint8_t i=0; i<len; i++) {
@@ -32,9 +32,9 @@ uint16_t read16(uint8_t reg){
 void write8(bool type, byte reg, byte value){
 	byte address;
 	if (type == GYROTYPE) {
-		address = LSM9DS0_ADDRESS_GYRO;
+		address = LSM9DS0_ADDRESS_G;
 	} else {
-		address = LSM9DS0_ADDRESS_ACCELMAG;
+		address = LSM9DS0_ADDRESS_XM;
 	}
 	I2c.write(address, reg, value);
 }
@@ -73,7 +73,7 @@ void avsf_init(){
 		I2c.write(LSM9DS0_ADDRESS_XM, LSM9DS0_REGISTER_CTRL_REG2_XM, v);
 		// range - mag
 		I2c.read(LSM9DS0_ADDRESS_XM, LSM9DS0_REGISTER_CTRL_REG6_XM, 1);
-		v = I2c.receive(); v &= ~(0b01100000); v |= MAG_RANGE;
+		v = I2c.receive(); v &= ~(0b01100000); v |= MAG_GAIN;
 		I2c.write(LSM9DS0_ADDRESS_XM, LSM9DS0_REGISTER_CTRL_REG6_XM, v);
 	}
 
@@ -86,7 +86,7 @@ void avsf_init(){
 		I2c.write(LSM9DS0_ADDRESS_XM, LSM9DS0_FIFO_CTRL_REG_G, 0b01000000);
 		// range - gyro
 		I2c.read(LSM9DS0_ADDRESS_XM, LSM9DS0_REGISTER_CTRL_REG4_G, 1);
-		v = I2c.receive(); v &= ~(0b01100000); v |= MAG_RANGE;
+		v = I2c.receive(); v &= ~(0b01100000); v |= GYRO_SCALE;
 		I2c.write(LSM9DS0_ADDRESS_XM, LSM9DS0_REGISTER_CTRL_REG4_G, v);
 	}
 	// Set up sense

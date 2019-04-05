@@ -86,6 +86,9 @@
 #define INA219_CONFIGVALUE_HI		       (0x9F)
 #define INA219_CONFIGVALUE_LO		       (0x39)
 
+#define INA219_CALVALUE (0)
+#define INA219_CONFIGVALUE (0)
+
 #define FS2012_ADDRESS  (0x07)
 
 byte readBuffer(bool type, byte reg, byte len, uint8_t *buffer);
