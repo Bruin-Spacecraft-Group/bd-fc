@@ -133,8 +133,10 @@ void sense_read(int16_t* buf){
 	buf[0] = ((I2c.receive()<<8) | I2c.receive());
 	I2c.read(INA219_ADDRESS, INA219_REG_BUSVOLTAGE, 2);
 	buf[1] = (( ((I2c.receive()<<8) | I2c.receive()) >> 3) * 4);
+	// Force something related to current sense
 	I2c.write(INA219_ADDRESS, INA219_REG_CALIBRATION, INA219_CALVALUE_HI);
 	I2c.write(INA219_ADDRESS, INA219_REG_CALIBRATION, INA219_CALVALUE_LO);
+	delay(1);
 	I2c.read(INA219_ADDRESS, INA219_REG_CURRENT, 2);
 	buf[2] = ((I2c.receive()<<8) | I2c.receive());
 	I2c.read(INA219_ADDRESS, INA219_REG_POWER, 2);
@@ -142,63 +144,25 @@ void sense_read(int16_t* buf){
 }
 
 void av_read(int16_t* V){
-	uint8_t xlo, ylo, zlo;
-	int16_t xhi, yhi, zhi;
-	byte buffer[6];
-
+	uint8_t buffer[6];
 	// Read 6, starting from X LSB
-	readBuffer(XMTYPE, LSM9DS0_VALUE_START_A, 6, buffer);
+	I2c.read(LSM9DS0_ADDRESS_XM, LSM9DS0_VALUE_START_A, 6, buffer);
 
-	xlo = buffer[0];
-	xhi = buffer[1];
-	ylo = buffer[2];
-	yhi = buffer[3];
-	zlo = buffer[4];
-	zhi = buffer[5];
-
-	// Shift values to create properly formed integer (low byte first)
-	xhi <<= 8; xhi |= xlo;
-	yhi <<= 8; yhi |= ylo;
-	zhi <<= 8; zhi |= zlo;
-
-	V[0] = xhi;
-	V[1] = yhi;
-	V[2] = zhi;
+	V[0] = (buffer[1]<<8) | buffer[0];
+	V[1] = (buffer[3]<<8) | buffer[2];
+	V[2] = (buffer[5]<<8) | buffer[4];
 
 	// Read the magnetometer
-	readBuffer(XMTYPE, LSM9DS0_VALUE_START_M, 6, buffer);
+	I2c.read(LSM9DS0_ADDRESS_XM, LSM9DS0_VALUE_START_M, 6, buffer);
 
-	xlo = buffer[0];
-	xhi = buffer[1];
-	ylo = buffer[2];
-	yhi = buffer[3];
-	zlo = buffer[4];
-	zhi = buffer[5];
-
-	// Shift values to create properly formed integer (low byte first)
-	xhi <<= 8; xhi |= xlo;
-	yhi <<= 8; yhi |= ylo;
-	zhi <<= 8; zhi |= zlo;
-	V[3] = xhi;
-	V[4] = yhi;
-	V[5] = zhi;
+	V[3] = (buffer[1]<<8) | buffer[0];
+	V[4] = (buffer[3]<<8) | buffer[2];
+	V[5] = (buffer[5]<<8) | buffer[4];
 
 	// Read gyro
-	readBuffer(GYROTYPE, LSM9DS0_VALUE_START_G, 6, buffer);
+	I2c.read(LSM9DS0_ADDRESS_G, LSM9DS0_VALUE_START_G, 6, buffer);
 
-	xlo = buffer[0];
-	xhi = buffer[1];
-	ylo = buffer[2];
-	yhi = buffer[3];
-	zlo = buffer[4];
-	zhi = buffer[5];
-
-	// Shift values to create properly formed integer (low byte first)
-	xhi <<= 8; xhi |= xlo;
-	yhi <<= 8; yhi |= ylo;
-	zhi <<= 8; zhi |= zlo;
-
-	V[6] = xhi;
-	V[7] = yhi;
-	V[8] = zhi;
+	V[6] = (buffer[1]<<8) | buffer[0];
+	V[7] = (buffer[3]<<8) | buffer[2];
+	V[8] = (buffer[5]<<8) | buffer[4];
 }
