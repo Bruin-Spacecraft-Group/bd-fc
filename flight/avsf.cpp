@@ -1,5 +1,5 @@
 #include "avsf.h"
-#include "i2c.h"
+#include "I2C.h"
 #include "cl.h"
 
 byte readBuffer(bool type, byte reg, byte len, uint8_t *buffer){
@@ -11,21 +11,21 @@ byte readBuffer(bool type, byte reg, byte len, uint8_t *buffer){
 	}
 	I2c.read(address, reg, (byte)len);
 	for (uint8_t i=0; i<len; i++) {
-		buffer[i] = I2c.recieve();
+		buffer[i] = I2c.receive();
 	}
 	return len;
 }
 
 void write16(uint8_t reg, uint16_t val){
-	I2c.write(INA219_ADDRESS, reg, (val>>8) & 0xFF);
-	I2c.write(INA219_ADDRESS, reg, val      & 0xFF);
+	I2c.write(INA219_ADDRESS, reg, (uint8_t)((val>>8) & 0xFF));
+	I2c.write(INA219_ADDRESS, reg, (uint8_t)(   val   & 0xFF));
 }
 
 uint16_t read16(uint8_t reg){
 	I2c.read(INA219_ADDRESS, reg, 2);
 	uint16_t val;
 	delay(1);
-	val = ((I2c.recieve()<<8) | I2c.recieve());
+	val = ((I2c.receive()<<8) | I2c.receive());
 	return val;
 }
 
@@ -47,7 +47,7 @@ byte read8(bool type, byte reg){
 
 int16_t flow_read(){
 	I2c.read(FS2012_ADDRESS, 2);
-	int16_t flow = (I2c.recieve()<<8) | I2c.recieve();
+	int16_t flow = (I2c.receive()<<8) | I2c.receive();
 	return flow;
 }
 
