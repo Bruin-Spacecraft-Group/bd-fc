@@ -52,12 +52,10 @@ int16_t flow_read(){
 }
 
 void avsf_init(){
-	// TODO: review this function and the register writes,
-	// sensitivity ranges
+	// TODO: review this function and the register writes, sensitivity ranges
 	uint8_t v = 0;
 	I2c.begin();
 	I2c.timeOut(20); // set 20 millisecond timeout
-	// TODO: remove infinite loops
 	I2c.read(LSM9DS0_ADDRESS_XM, LSM9DS0_REGISTER_WHO_AM_I_XM, 1);
 	if(I2c.receive() == LSM9DS0_XM_ID){
 		// init
@@ -89,6 +87,7 @@ void avsf_init(){
 		v = I2c.receive(); v &= ~(0b01100000); v |= GYRO_SCALE;
 		I2c.write(LSM9DS0_ADDRESS_XM, LSM9DS0_REGISTER_CTRL_REG4_G, v);
 	}
+
 	// Set up sense
 	I2c.write(INA219_ADDRESS, INA219_REG_CALIBRATION, INA219_CALVALUE_HI);
 	I2c.write(INA219_ADDRESS, INA219_REG_CALIBRATION, INA219_CALVALUE_LO);
@@ -130,16 +129,16 @@ void avsf_read(DATA* d){
 }
 
 void sense_read(int16_t* buf){
-	uint16_t t;
-	t = read16(INA219_REG_SHUNTVOLTAGE);
-	buf[0] = (int16_t)t;
-	t = read16(INA219_REG_BUSVOLTAGE);
-	buf[1] = (int16_t)((t >> 3) * 4);
-	write16(INA219_REG_CALIBRATION, INA219_CALVALUE);
-	t = read16(INA219_REG_CURRENT);
-	buf[2] = (int16_t)(t);
-	t = read16(INA219_REG_POWER);
-	buf[3] = (int16_t)(t);
+	I2c.read(INA219_ADDRESS, INA219_REG_SHUNTVOLTAGE, 2);
+	buf[0] = ((I2c.receive()<<8) | I2c.receive());
+	I2c.read(INA219_ADDRESS, INA219_REG_BUSVOLTAGE, 2);
+	buf[1] = (( ((I2c.receive()<<8) | I2c.receive()) >> 3) * 4);
+	I2c.write(INA219_ADDRESS, INA219_REG_CALIBRATION, INA219_CALVALUE_HI);
+	I2c.write(INA219_ADDRESS, INA219_REG_CALIBRATION, INA219_CALVALUE_LO);
+	I2c.read(INA219_ADDRESS, INA219_REG_CURRENT, 2);
+	buf[2] = ((I2c.receive()<<8) | I2c.receive());
+	I2c.read(INA219_ADDRESS, INA219_REG_POWER, 2);
+	buf[3] = ((I2c.receive()<<8) | I2c.receive());
 }
 
 void av_read(int16_t* V){
