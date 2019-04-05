@@ -68,11 +68,10 @@
 #define GYRO_DPS_DIGIT      (LSM9DS0_GYRO_DPS_DIGIT_245DPS)
 #define GYRO_SCALE (LSM9DS0_GYROSCALE_245DPS)
 
-#define GYROTYPE                           (true)
-#define XMTYPE                             (false)
-
 #define SENSORS_GRAVITY_EARTH             (9.80665F)
 
+
+// Current Sense Stuff
 #define INA219_ADDRESS                         (0x40)
 #define INA219_READ                            (0x01)
 #define INA219_REG_CALIBRATION                 (0x05)
@@ -86,21 +85,14 @@
 #define INA219_CONFIGVALUE_HI		       (0x9F)
 #define INA219_CONFIGVALUE_LO		       (0x39)
 
-#define INA219_CALVALUE (0)
-#define INA219_CONFIGVALUE (0)
 
+// FS2012 Stuff
 #define FS2012_ADDRESS  (0x07)
 
-byte readBuffer(bool type, byte reg, byte len, uint8_t *buffer);
-void write8(bool type, byte reg, byte value);
-byte read8(bool type, byte reg);
-uint16_t read16(uint8_t reg);
-void write16(uint8_t reg, uint16_t val);
 void avsf_init();
-void av_read(int16_t* A, int16_t* M, int16_t* G);
 void avsf_read(DATA* d);
 void av_read(int16_t* V);
 void sense_read(int16_t* buf);
-int16_t flow_read();
+void flow_read();
 
 #endif
