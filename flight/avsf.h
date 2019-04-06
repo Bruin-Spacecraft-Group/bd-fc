@@ -93,6 +93,6 @@ void avsf_init();
 void avsf_read(DATA* d);
 void av_read(int16_t* V);
 void sense_read(int16_t* buf);
-void flow_read();
+void flow_read(int16_t* t);
 
 #endif

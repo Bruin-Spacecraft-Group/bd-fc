@@ -6,8 +6,8 @@
 #include <Arduino.h>
 
 #define FLAG_DEBUG 7
-// Done or not done (done means don't do anything)
-#define FLAG_DONE 6
+// RESET flag: if turned on, don't attempt another reset
+#define FLAG_RESET 6
 // Mosfet on/off
 #define FLAG_MOSFET 5
 /* FLAG_NFF_H | FLAG_NFF_L | Status
@@ -36,20 +36,17 @@
 #define TIMER_TIME 180000
 
 typedef struct{
-	unsigned char FLAGS = 0;
-	unsigned long SD_ADDR;
+	unsigned char FLAGS = 0; // 1 byte
+	unsigned long SD_ADDR; // 4 bytes
 	unsigned long time;
 	unsigned long trigger_time = 0;
-	byte NFF[200];
-	int SENSE[4];
-	int AV[16][9];
-	int FLOW;
-	unsigned char nul = 0x20;
+	byte NFF[200]; // 200 bytes
+	int SENSE[4]; // 8 bytes
+	int AV[16][9]; // 288 bytes
+	int FLOW; // 2 bytes
+	unsigned char nul = 0x20; // 1 byte
 } DATA;
 
-void cl_ISR();
-void cl_setupInterrupt();
-int cl_getFlow();
 void cl_comb(DATA* d);
 void cl_setDebugFlag(DATA* d);
 void cl_debugMode(DATA* d);
