@@ -13,19 +13,29 @@ FATFS cl_sdVolume;
 UINT cl_sdBytesWritten;
 
 void cl_sdInit(){
+	uint8_t flags = EEPROM.read(0);
+	bool reset = bitRead(flags, FLAG_RESET);
 	FRESULT fc = pf_mount(&cl_sdVolume);
 	if(fc){
 		Serial.print("problem mounting: ");
 		Serial.println(fc);
-		wdt_enable(WDTO_15MS);
-		for(;;);
+		if(!reset){
+			bitWrite(flags, FLAG_RESET, 1);
+			EEPROM.write(0, flags);
+			wdt_enable(WDTO_500MS);
+			for(;;);
+		}
 	}
 	fc = pf_open(SAVE_FILE);
 	if(fc){
 		Serial.print("problem opening: ");
 		Serial.println(fc);
-		wdt_enable(WDTO_15MS);
-		for(;;);
+		if(!reset){
+			bitWrite(flags, FLAG_RESET, 1);
+			EEPROM.write(0, flags);
+			wdt_enable(WDTO_500MS);
+			for(;;);
+		}
 	}
 }
 
@@ -33,7 +43,6 @@ void cl_sdWrite(DATA* d){
 	pf_lseek(d->SD_ADDR);
 	FRESULT fc = pf_write((byte*)d, 512, &cl_sdBytesWritten);
 	if(fc || cl_sdBytesWritten != 512){
-		// TODO: if problem writing, try switching to backup file?
 		Serial.print("problem writing: ");
 		Serial.println(cl_sdBytesWritten);
 		return;
@@ -49,13 +58,19 @@ void cl_setDebugFlag(DATA* d){
 }
 
 void cl_comb(DATA* d){
-	// skip this entire section if it we're done TODO: possibly update?
-	if(bitRead(d->FLAGS, FLAG_DONE))
-		return;
-	// Also update flow flag here
-	if(!bitRead(d->FLAGS, FLAG_FLOW))
-		bitWrite(d->FLAGS, FLAG_FLOW, !!(d->FLOW));
 	unsigned long t = d->time - d->trigger_time;
+	// Also update flow flag here
+	if(bitRead(d->FLAGS, FLAG_MOSFET) && t > 30000 && d->SD_ADDR % 5120 == 0){
+		// eeprom.put(13) will be a uint8 value that goes up to 255: this is n
+		// from eeprom.put(14) to eeprom.put(14 + 6n) where n = 167 values
+		uint8_t val = EEPROM.read(13);
+		if(val < 167){
+			EEPROM.put(14 + 6*val, d->FLOW);
+			EEPROM.put(16 + 6*val, (d->SENSE)[1]);
+			EEPROM.put(18 + 6*val, (d->SENSE)[2]);
+		}
+		EEPROM.write(13, ++val);
+	}
 	// expand bits
 	int nff = (bitRead(d->FLAGS, FLAG_NFF_H) * 2) + bitRead(d->FLAGS, FLAG_NFF_L);
 	int avs = (bitRead(d->FLAGS, FLAG_AVS_H) * 2) + bitRead(d->FLAGS, FLAG_AVS_L);
@@ -63,7 +78,6 @@ void cl_comb(DATA* d){
 		// look for turnoff signals
 		if(avs == 3 || nff == 3 || t > TIMER_TIME){
 			digitalWrite(MOSFET_PIN, LOW);
-			bitWrite(d->FLAGS, FLAG_DONE, 1);
 			bitWrite(d->FLAGS, FLAG_MOSFET, 0);
 			return;
 		}
@@ -79,7 +93,6 @@ void cl_comb(DATA* d){
 			}
 			if(avs == 0 && nff == 0)
 				return;
-			// < can account for negative and zero (TODO: reason it out)
 			if(t < TIMER_TIME)
 				return;
 		}
@@ -211,6 +224,12 @@ void cl_debugMode(DATA* d){
 				}
 				Serial.println(d->FLOW);
 				Serial.println(F("END OF DUMP------"));
+				Serial.println(F("EEPROM DUMP++++++"));
+				for(int i = 0; i < EEPROM.length(); i++){
+					Serial.print(EEPROM.read(i));
+					Serial.print(" ");
+				}
+				Serial.println(F("EEPROM DUMP END------"));
 				break;
 			case 'f':
 				avsf_read(d);
@@ -219,14 +238,14 @@ void cl_debugMode(DATA* d){
 				break;
 			case 'r':
 				Serial.println(F("RESETTING"));
-				for(int i = 0; i < 256; i++)
+				for(int i = 0; i < EEPROM.length(); i++)
 					EEPROM.put(i, 0);
 				memset(d, 0, 512);
 				break;
 
 			// Other utilities
 			case 't':
-				// t command should be appended with full NFF data string, possibly 2
+				// t command should be appended with full NFF data string
 				delay(100);
 				unsigned long b, e;
 				Serial.print(F("NFF TIME: "));

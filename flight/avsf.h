@@ -1,7 +1,6 @@
 #ifndef __AVS_H__
 #define __AVS_H__
 #include <Arduino.h>
-#include <Wire.h>
 #include "cl.h"
 // TODO: clarify these values
 #define AVG_HIGH_TRIGGER 16000
@@ -11,8 +10,8 @@
 #define XAVG_NEG_TRIGGER 30000
 
 
-#define LSM9DS0_ADDRESS_ACCELMAG           (0x1D)         // 3B >> 1 = 7bit default
-#define LSM9DS0_ADDRESS_GYRO               (0x6B)         // D6 >> 1 = 7bit default
+#define LSM9DS0_ADDRESS_XM           (0x1D)         // 3B >> 1 = 7bit default
+#define LSM9DS0_ADDRESS_G               (0x6B)         // D6 >> 1 = 7bit default
 #define LSM9DS0_VALUE_START_A		(0b10101000)
 #define LSM9DS0_VALUE_START_M		(0b10001000)
 #define LSM9DS0_VALUE_START_G		(0b10101000)
@@ -30,8 +29,8 @@
 
 #define LSM9DS0_REG0_XM (0x1F)
 #define LSM9DS0_REG5_G (0x24)
-#define LSM9DSO_FIFO_CTRL_REG_G (0x2E)
-#define LSM9DSO_FIFO_CTRL_REG_XM (0x2E)
+#define LSM9DS0_FIFO_CTRL_REG_G (0x2E)
+#define LSM9DS0_FIFO_CTRL_REG_XM (0x2E)
 
 // Linear Acceleration: mg per LSB
 #define LSM9DS0_ACCELRANGE_2G  (0b000 << 3)
@@ -69,11 +68,10 @@
 #define GYRO_DPS_DIGIT      (LSM9DS0_GYRO_DPS_DIGIT_245DPS)
 #define GYRO_SCALE (LSM9DS0_GYROSCALE_245DPS)
 
-#define GYROTYPE                           (true)
-#define XMTYPE                             (false)
-
 #define SENSORS_GRAVITY_EARTH             (9.80665F)
 
+
+// Current Sense Stuff
 #define INA219_ADDRESS                         (0x40)
 #define INA219_READ                            (0x01)
 #define INA219_REG_CALIBRATION                 (0x05)
@@ -82,21 +80,19 @@
 #define INA219_REG_CURRENT                     (0x04)
 #define INA219_REG_POWER                       (0x03)
 #define INA219_REG_SHUNTVOLTAGE                (0x01)
-#define INA219_CALVALUE			(10240)
-#define INA219_CONFIGVALUE		(14751)
+#define INA219_CALVALUE_HI		       (0x00)
+#define INA219_CALVALUE_LO		       (0x28)
+#define INA219_CONFIGVALUE_HI		       (0x9F)
+#define INA219_CONFIGVALUE_LO		       (0x39)
 
+
+// FS2012 Stuff
 #define FS2012_ADDRESS  (0x07)
 
-byte readBuffer(bool type, byte reg, byte len, uint8_t *buffer);
-void write8(bool type, byte reg, byte value);
-byte read8(bool type, byte reg);
-uint16_t read16(uint8_t reg);
-void write16(uint8_t reg, uint16_t val);
 void avsf_init();
-void av_read(int16_t* A, int16_t* M, int16_t* G);
 void avsf_read(DATA* d);
 void av_read(int16_t* V);
 void sense_read(int16_t* buf);
-int16_t flow_read();
+void flow_read(int16_t* t);
 
 #endif
