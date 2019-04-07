@@ -11,6 +11,7 @@
 
 FATFS cl_sdVolume;
 UINT cl_sdBytesWritten;
+const unsigned long TIMER_TIME = 180000;
 
 void cl_sdInit(){
 	uint8_t flags = EEPROM.read(0);
@@ -54,47 +55,49 @@ void cl_sdWrite(DATA* d){
 }
 
 void cl_setDebugFlag(DATA* d){
-	bitWrite(d->FLAGS, FLAG_DEBUG, (analogRead(A0) == 1023));
+	bitWrite(d->FLAGS, FLAG_DEBUG, (analogRead(A0) > 950));
 }
 
 void cl_comb(DATA* d){
 	unsigned long t = d->time - d->trigger_time;
-	// Also update flow flag here
-	if(bitRead(d->FLAGS, FLAG_MOSFET) && t > 30000 && d->SD_ADDR % 5120 == 0){
+	if(bitRead(d->FLAGS, FLAG_MOSFET) && t > 30000 && d->SD_ADDR % 5120 == 0 && (d->trigger_time != 0)){
 		// eeprom.put(13) will be a uint8 value that goes up to 255: this is n
 		// from eeprom.put(14) to eeprom.put(14 + 6n) where n = 167 values
 		uint8_t val = EEPROM.read(13);
 		if(val < 167){
 			EEPROM.put(14 + 6*val, d->FLOW);
-			EEPROM.put(16 + 6*val, (d->SENSE)[1]);
-			EEPROM.put(18 + 6*val, (d->SENSE)[2]);
+			EEPROM.put(16 + 6*val, (d->SENSE)[2]);
+			EEPROM.put(18 + 6*val, (d->SENSE)[1]);
 		}
 		EEPROM.write(13, ++val);
 	}
 	// expand bits
 	int nff = (bitRead(d->FLAGS, FLAG_NFF_H) * 2) + bitRead(d->FLAGS, FLAG_NFF_L);
 	int avs = (bitRead(d->FLAGS, FLAG_AVS_H) * 2) + bitRead(d->FLAGS, FLAG_AVS_L);
+	// if nothing happened, return
+	if(avs == 0 && nff == 0)
+		return;
 	if(bitRead(d->FLAGS, FLAG_MOSFET)){
 		// look for turnoff signals
 		if(avs == 3 || nff == 3 || t > TIMER_TIME){
 			digitalWrite(MOSFET_PIN, LOW);
 			bitWrite(d->FLAGS, FLAG_MOSFET, 0);
-			return;
 		}
+		return;
 	}
 	else{
 		// if neither is toggled
 		if(avs != 2 && nff != 2){
 			// if the timer has not been set, try setting it
-			if((avs == 1 || nff == 1) && !(d->trigger_time)){
+			if((avs == 1 || nff == 1) && (d->trigger_time == 0)){
 				d->trigger_time = d->time;
 				EEPROM.put(9, d->trigger_time);
 				return;
 			}
-			if(avs == 0 && nff == 0)
+			// if timer was set but not there yet, return
+			if((d->trigger_time != 0) && t < TIMER_TIME){
 				return;
-			if(t < TIMER_TIME)
-				return;
+			}
 		}
 		// if this code is run, it means either avs/nff is 2 or timer is set and done
 		d->trigger_time = d->time;
@@ -114,6 +117,7 @@ void cl_resetState(DATA* d){
 	EEPROM.get(0, d->FLAGS);
 	// restore MOSFET pin
 	digitalWrite(MOSFET_PIN, bitRead(d->FLAGS, FLAG_MOSFET));
+	// indicate that it has been reset before
 	unsigned long ot, tt;
 	EEPROM.get(5, ot);
 	EEPROM.get(9, tt);
@@ -122,6 +126,7 @@ void cl_resetState(DATA* d){
 		// a valid timer was running; take the timer difference and set the trigger time to that
 		d->trigger_time = t - TIMER_TIME;
 	}
+	cl_getTime(d);
 	EEPROM.get(1, d->SD_ADDR);
 }
 
@@ -187,9 +192,9 @@ void cl_debugMode(DATA* d){
 				Serial.print(F("BUS VOLTAGE (V): "));
 				Serial.println(d->SENSE[1] * 0.001);
 				break;
-			
 
-			// Data aquisition / export
+
+				// Data aquisition / export
 			case 's':
 				// Wait 100 ms to load all nff data in serial buffer into dataframe
 				delay(100);
@@ -224,13 +229,44 @@ void cl_debugMode(DATA* d){
 				}
 				Serial.println(d->FLOW);
 				Serial.println(F("END OF DUMP------"));
-				Serial.println(F("EEPROM DUMP++++++"));
-				for(int i = 0; i < EEPROM.length(); i++){
-					Serial.print(EEPROM.read(i));
-					Serial.print(" ");
-				}
-				Serial.println(F("EEPROM DUMP END------"));
 				break;
+			case 'e':
+				{
+					Serial.println(F("EEPROM DUMP++++++"));
+					uint8_t f = 0; unsigned long l = 0;
+					uint16_t v = 0;
+					EEPROM.get(0, f);
+					Serial.print(F("EEPROM FLAGS: "));
+					for(int i = 0; i < 8; i++){
+						Serial.print(bitRead(f, i));
+					}
+					Serial.println();
+					EEPROM.get(1, l);
+					Serial.print(F("EEPROM SD: "));
+					Serial.println(l);
+					EEPROM.get(5, l);
+					Serial.print(F("EEPROM TIME: "));
+					Serial.println(l);
+					EEPROM.get(9, l);
+					Serial.print(F("EEPROM TRIGGER TIME: "));
+					Serial.println(l);
+					Serial.println(F("EEPROM SAVED DATA:"));
+					for(int i = 0; i < 167; i++){
+						EEPROM.get(14+6*i, v);
+						Serial.print(F("flow: "));
+						Serial.print(v/10);
+						EEPROM.get(16+6*i, v);
+						Serial.print(F(" current: "));
+						Serial.print((float)v / 25.0);
+						EEPROM.get(18+6*i, v);
+						Serial.print(F(" voltage: "));
+						Serial.print(v * 0.001);
+						Serial.println();
+					}
+					Serial.println(F("EEPROM DUMP END------"));
+					break;
+				}
+
 			case 'f':
 				avsf_read(d);
 				Serial.print(F("FLOW (SCCM): "));
@@ -238,12 +274,14 @@ void cl_debugMode(DATA* d){
 				break;
 			case 'r':
 				Serial.println(F("RESETTING"));
-				for(int i = 0; i < EEPROM.length(); i++)
+				for(unsigned int i = 0; i < EEPROM.length(); i++){
 					EEPROM.put(i, 0);
+				}
 				memset(d, 0, 512);
+				Serial.println(F("DONE"));
 				break;
 
-			// Other utilities
+				// Other utilities
 			case 't':
 				// t command should be appended with full NFF data string
 				delay(100);
@@ -297,7 +335,7 @@ void cl_debugMode(DATA* d){
 				Serial.println(F("FLIGHT LOOP EMULATION"));
 				Serial.println(F("PLUG IN A0-5V JUMPER TO EXIT"));
 				delay(1000);
-				while(analogRead(A0) != 1023){
+				while(analogRead(A0) < 950){
 					cl_getTime(d);
 					avsf_read(d);
 					nff_getData(d);
@@ -312,15 +350,14 @@ void cl_debugMode(DATA* d){
 				Serial.println(F("VERBOSE LOOP EMULATION"));
 				Serial.println(F("PLUG IN A0-5V JUMPER TO EXIT"));
 				delay(1000);
-				while(analogRead(A0) != 1023){
+				while(analogRead(A0) < 950){
 					delay(1000);
 					cl_getTime(d);
 					avsf_read(d);
 					nff_getData(d);
 					cl_comb(d);
-					cl_sdWrite(d);
-					for(int i = 0; i < 512; i++)
-						Serial.print(((byte*)d)[i]);
+					Serial.write((byte*)d, 512);
+					Serial.println();
 				}
 				wdt_enable(WDTO_15MS);
 				for(;;);

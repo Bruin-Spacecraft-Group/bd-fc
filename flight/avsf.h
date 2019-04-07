@@ -80,10 +80,8 @@
 #define INA219_REG_CURRENT                     (0x04)
 #define INA219_REG_POWER                       (0x03)
 #define INA219_REG_SHUNTVOLTAGE                (0x01)
-#define INA219_CALVALUE_HI		       (0x00)
-#define INA219_CALVALUE_LO		       (0x28)
-#define INA219_CONFIGVALUE_HI		       (0x9F)
-#define INA219_CONFIGVALUE_LO		       (0x39)
+#define INA219_CALVALUE			       (10240)
+#define INA219_CONFIGVALUE		       (14751)
 
 
 // FS2012 Stuff

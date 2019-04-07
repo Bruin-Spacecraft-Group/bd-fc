@@ -33,12 +33,11 @@
 // ALSO PFF DOESN'T LET US USE LOWER CASE
 #define SAVE_FILE "WRITE.TXT"
 #define MOSFET_PIN 4
-#define TIMER_TIME 180000
 
 typedef struct{
 	unsigned char FLAGS = 0; // 1 byte
 	unsigned long SD_ADDR; // 4 bytes
-	unsigned long time;
+	unsigned long time = 0;
 	unsigned long trigger_time = 0;
 	byte NFF[200]; // 200 bytes
 	int SENSE[4]; // 8 bytes

@@ -2,6 +2,9 @@
 #include "I2C.h"
 #include "cl.h"
 
+const uint8_t INA219_calv[2] = {(INA219_CALVALUE >> 8) & 0xFF, INA219_CALVALUE & 0xFF};
+const uint8_t INA219_conv[2] = {(INA219_CONFIGVALUE >> 8) & 0xFF, INA219_CONFIGVALUE & 0xFF};
+
 void avsf_init(){
 	uint8_t v = 0;
 	I2c.begin();
@@ -38,11 +41,8 @@ void avsf_init(){
 		I2c.write(LSM9DS0_ADDRESS_XM, LSM9DS0_REGISTER_CTRL_REG4_G, v);
 	}
 
-	// Set up sense
-	I2c.write(INA219_ADDRESS, INA219_REG_CALIBRATION, INA219_CALVALUE_HI);
-	I2c.write(INA219_ADDRESS, INA219_REG_CALIBRATION, INA219_CALVALUE_LO);
-	I2c.write(INA219_ADDRESS, INA219_REG_CONFIG, INA219_CONFIGVALUE_HI);
-	I2c.write(INA219_ADDRESS, INA219_REG_CONFIG, INA219_CONFIGVALUE_LO);
+	I2c.write(INA219_ADDRESS, INA219_REG_CALIBRATION, INA219_calv, 2);
+	I2c.write(INA219_ADDRESS, INA219_REG_CONFIG, INA219_conv, 2);
 }
 
 void avsf_read(DATA* d){
@@ -53,8 +53,8 @@ void avsf_read(DATA* d){
 	for(int av_DATAROW = 0; av_DATAROW < 16; av_DATAROW++){
 		av_read((int16_t*) &(d->AV)[av_DATAROW]);
 		avg += sqrt(sq((d->AV)[av_DATAROW][0]) + \
-			sq((d->AV)[av_DATAROW][1]) + \
-			sq((d->AV)[av_DATAROW][2]));
+				sq((d->AV)[av_DATAROW][1]) + \
+				sq((d->AV)[av_DATAROW][2]));
 		x_avg += (d->AV[av_DATAROW][0]);
 	}
 	flow_read((int16_t*) &(d->FLOW));
@@ -84,11 +84,10 @@ void sense_read(int16_t* buf){
 	I2c.read(INA219_ADDRESS, INA219_REG_BUSVOLTAGE, 2);
 	buf[1] = (( ((I2c.receive()<<8) | I2c.receive()) >> 3) * 4);
 	// Force something related to current sense
-	I2c.write(INA219_ADDRESS, INA219_REG_CALIBRATION, INA219_CALVALUE_HI);
-	I2c.write(INA219_ADDRESS, INA219_REG_CALIBRATION, INA219_CALVALUE_LO);
-	delay(1);
+	I2c.write(INA219_ADDRESS, INA219_REG_CALIBRATION, INA219_calv, 2);
 	I2c.read(INA219_ADDRESS, INA219_REG_CURRENT, 2);
 	buf[2] = ((I2c.receive()<<8) | I2c.receive());
+	I2c.write(INA219_ADDRESS, INA219_REG_CALIBRATION, INA219_calv, 2);
 	I2c.read(INA219_ADDRESS, INA219_REG_POWER, 2);
 	buf[3] = ((I2c.receive()<<8) | I2c.receive());
 }

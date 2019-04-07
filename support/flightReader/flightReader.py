@@ -1,4 +1,40 @@
-from binascii import unhexify
+from binascii import unhexlify
+import struct
+
+def parse(data):
+    hData = data.hex()
+    currentString = ''
+    string = ''
+    for i in range(0,len(hData),2):
+        currentString = hData[i:i+2] + ' '
+        string += currentString
+    r = {}
+    r['FLAGS'] = string[0:2]
+    r['SD ADDRESS'] = string[3:14]
+    r['SD ADDRESS'] = int(littleEndian(r['SD ADDRESS']), 16)
+    r['CURRENT TIME'] = string[15:26]
+    r['CURRENT TIME'] = int(littleEndian(r['CURRENT TIME']), 16)
+    r['TRIGGER TIME'] = string[27:38]
+    r['TRIGGER TIME'] = int(littleEndian(r['TRIGGER TIME']), 16)
+    r['NFF DATA'] = string[39:638]
+    r['NFF DATA'] = ''.join([chr(int(x, 16)) for x in (r['NFF DATA'].split())])
+    r['SENSE DATA'] = string[639:662]
+    r['SENSE DATA'] = littleEndianArr(r['SENSE DATA']);
+    t = string[663:1526]
+    t = littleEndianArr(t);
+    r['ACCEL DATA'] = []
+    r['GYRO DATA'] = []
+    r['MAG DATA'] = []
+    for i in range(0, 16):
+        r['ACCEL DATA'].append([t[  i*9  ], t[i*9 + 1], t[i*9 + 2]])
+        r['GYRO DATA'].append([t[i*9 + 3], t[i*9 + 4], t[i*9 + 5]])
+        r['MAG DATA'].append([t[i*9 + 6], t[i*9 + 7], t[i*9 + 8]])
+
+    r['FLOW DATA'] = string[1527:1532]
+    r['FLOW DATA'] = int(littleEndian(r['FLOW DATA']), 16)
+    r['NULL BYTE'] = string[1533:1535]
+
+    return r
 
 '''
 Function littleEndianArr
@@ -10,24 +46,15 @@ Rather it will parse the data type and output a list of the data in the given or
 @param dataTypeSize: int, size of data type given
 @return: list, list of strings that each are in little endian
 '''
-def littleEndianArr(hexString,dataTypeSize):
+
+def littleEndianArr(hexString):
+    # list of all the bytes in consecutive order
     byteList = hexString.split()
-    dataBreakoutList = []
-    leng = len(byteList)
-
-    for i in range(0,int(leng/dataTypeSize)):
-        currentData = []
-        for j in range(0,dataTypeSize):
-            currentData.append(byteList[i])
-        currentData = currentData[::-1]
-        dataBreakoutList.append(currentData)
-
-    dataBreakoutString = []
-    for i in dataBreakoutList:
-        allBytes = ''.join(i)
-        dataBreakoutString.append(allBytes)
-
-    return dataBreakoutString
+    l = []
+    for i in range(0, len(byteList), 2):
+    # i represents the # of elements that should be reversed
+        l.append(struct.unpack('<h', bytes.fromhex(''.join(byteList[i:i+2])))[0])
+    return(l)
 
 '''
 Function littleEndian
@@ -69,4 +96,4 @@ Will translate a string of hex values to readable char values
 @return: none
 '''
 def translateByteToChar(hexString):
-    print(unhexify(hexString))
+    print(unhexlify(hexString))

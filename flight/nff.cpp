@@ -4,7 +4,7 @@
 
 void nff_getData(DATA* d) {
 	if(!Serial.available())
-		return 0;
+		return;
 	int len = Serial.readBytes(d->NFF, 200);
 	int l = 0;
 	while (l < len) {
